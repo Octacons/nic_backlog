@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "522322765675",
+    "project_id": "nic-backlog",
+    "storage_bucket": "nic-backlog.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:522322765675:android:6675d6fcaf0250f3da8e2e",
+        "android_client_info": {
+          "package_name": "com.example.nic_backlog"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBCx9-SRs8kw9WzH6Hr8N00pUXhxRt8hBI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
