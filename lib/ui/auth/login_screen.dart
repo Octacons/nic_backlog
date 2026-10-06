@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nic_backlog/ui/auth/register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -64,7 +65,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: Colors.blue,
                       ),
                     ),
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => RegisterScreen(),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
