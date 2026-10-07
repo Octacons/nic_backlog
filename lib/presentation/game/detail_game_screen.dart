@@ -20,7 +20,6 @@ class _GameDetailScreenState extends State<GameDetailScreen> {
   @override
   void initState() {
     super.initState();
-    // Cukup lempar event ke BLoC, gak perlu panggil repository langsung
     context.read<GameBloc>().add(
       FetchGameDetailRequested(gameId: widget.gameId),
     );
@@ -146,7 +145,6 @@ class _GameDetailScreenState extends State<GameDetailScreen> {
                       rating: rating,
                     );
 
-                    // Kirim event ke BLoC untuk add log
                     context.read<GameBloc>().add(
                       AddGameLogRequested(gameId: widget.gameId, log: newLog),
                     );
