@@ -214,7 +214,7 @@ class _GameDetailScreenState extends State<GameDetailScreen> {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.redAccent.withOpacity(0.2),
+                              color: Colors.redAccent.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -270,7 +270,7 @@ class _GameDetailScreenState extends State<GameDetailScreen> {
                         game.description.isNotEmpty
                             ? game.description
                             : "Tidak ada deskripsi.",
-                        style: TextStyle(color: Colors.grey[300], height: 1.4),
+                        style: TextStyle(color: Colors.black, height: 1.4),
                       ),
 
                       const Divider(height: 32, thickness: 1),
@@ -348,7 +348,9 @@ class _GameDetailScreenState extends State<GameDetailScreen> {
                                           vertical: 4,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: Colors.amber.withOpacity(0.2),
+                                          color: Colors.amber.withValues(
+                                            alpha: 0.2,
+                                          ),
                                           borderRadius: BorderRadius.circular(
                                             6,
                                           ),
