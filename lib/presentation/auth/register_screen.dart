@@ -144,7 +144,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   }
                 },
                 builder: (context, state) {
-                  // Rebuild UI sesuai State
                   if (state is AuthLoading) {
                     return const CircularProgressIndicator();
                   }
@@ -152,7 +151,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   return ElevatedButton(
                     onPressed: () {
                       if (_registerFormKey.currentState!.validate()) {
-                        // KIRIM EVENT KE BLOC
                         context.read<AuthBloc>().add(
                           RegisterRequested(
                             username: _usernameController.text,
