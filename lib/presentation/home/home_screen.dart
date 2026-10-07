@@ -4,6 +4,7 @@ import 'package:nic_backlog/logic/auth/auth_bloc.dart';
 import 'package:nic_backlog/logic/auth/auth_event.dart';
 import 'package:nic_backlog/logic/auth/auth_state.dart';
 import 'package:nic_backlog/presentation/auth/login_screen.dart';
+import 'package:nic_backlog/presentation/game/add_game_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -27,30 +28,35 @@ class HomeScreen extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(title: const Text("Nic-BackLog")),
         drawer: Drawer(
-          child: SafeArea(
-            child: Column(
-              children: [
-                const DrawerHeader(
-                  decoration: BoxDecoration(color: Colors.redAccent),
-                  child: Center(
-                    child: Text(
-                      'Nic_BackLog',
-                      style: TextStyle(color: Colors.white, fontSize: 20),
-                    ),
+          child: Column(
+            children: [
+              const DrawerHeader(
+                decoration: BoxDecoration(color: Colors.redAccent),
+                child: Center(
+                  child: Text(
+                    'Nic_BackLog',
+                    style: TextStyle(color: Colors.white, fontSize: 20),
                   ),
                 ),
-                ListTile(
-                  leading: const Icon(Icons.home),
-                  title: const Text('Home'),
-                  onTap: () {},
-                ),
-                ListTile(
-                  leading: const Icon(Icons.gamepad),
-                  title: const Text('Item 1'),
-                  onTap: () {},
-                ),
-                const Spacer(),
-                ListTile(
+              ),
+              ListTile(
+                leading: const Icon(Icons.home),
+                title: const Text('Home'),
+                onTap: () {},
+              ),
+              ListTile(
+                leading: const Icon(Icons.gamepad),
+                title: const Text('Add Game List'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => AddGameScreen()),
+                  );
+                },
+              ),
+              const Spacer(),
+              SafeArea(
+                child: ListTile(
                   leading: const Icon(Icons.logout, color: Colors.red),
                   title: const Text(
                     'Log Out',
@@ -61,8 +67,8 @@ class HomeScreen extends StatelessWidget {
                     context.read<AuthBloc>().add(LogoutRequested());
                   },
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
         body: const Center(child: Text("Welcome to Nic-BackLog!")),

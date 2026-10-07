@@ -2,7 +2,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nic_backlog/data/repositories/auth_repository.dart';
+import 'package:nic_backlog/data/repositories/game_repository.dart';
 import 'package:nic_backlog/logic/auth/auth_bloc.dart';
+import 'package:nic_backlog/logic/game/game_bloc.dart';
 import 'package:nic_backlog/presentation/auth/login_screen.dart';
 
 void main() async {
@@ -21,12 +23,20 @@ class MyApp extends StatelessWidget {
         RepositoryProvider<AuthRepository>(
           create: (context) => AuthRepository(),
         ),
+
+        RepositoryProvider<GameRepository>(
+          create: (context) => GameRepository(),
+        ),
       ],
       child: MultiBlocProvider(
         providers: [
           BlocProvider<AuthBloc>(
             create: (context) =>
                 AuthBloc(authRepository: context.read<AuthRepository>()),
+          ),
+          BlocProvider<GameBloc>(
+            create: (context) =>
+                GameBloc(gameRepository: context.read<GameRepository>()),
           ),
         ],
         child: MaterialApp(

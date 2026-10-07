@@ -14,14 +14,17 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     AddGameRequested event,
     Emitter<GameState> emit,
   ) async {
-    emit(state.copyWith(status: GameStatus.loading));
+    emit(state.copyWith(status: GameStateStatus.loading));
 
     try {
       await gameRepository.addGame(event.game);
-      emit(state.copyWith(status: GameStatus.success));
+      emit(state.copyWith(status: GameStateStatus.success));
     } catch (e) {
       emit(
-        state.copyWith(status: GameStatus.failure, errorMessage: e.toString()),
+        state.copyWith(
+          status: GameStateStatus.failure,
+          errorMessage: e.toString(),
+        ),
       );
     }
   }

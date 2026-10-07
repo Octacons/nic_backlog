@@ -1,21 +1,21 @@
 import 'package:equatable/equatable.dart';
 import 'package:nic_backlog/data/models/game_model.dart';
 
-enum GameStatus { initial, loading, success, failure }
+enum GameStateStatus { initial, loading, success, failure }
 
 class GameState extends Equatable {
-  final GameStatus status;
+  final GameStateStatus status;
   final List<GameModel> games;
   final String? errorMessage;
 
   const GameState({
-    this.status = GameStatus.initial,
+    this.status = GameStateStatus.initial,
     this.games = const [],
     this.errorMessage,
   });
 
   GameState copyWith({
-    GameStatus? status,
+    GameStateStatus? status,
     List<GameModel>? games,
     String? errorMessage,
   }) {
