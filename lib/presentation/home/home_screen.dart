@@ -49,11 +49,7 @@ class HomeScreen extends StatelessWidget {
                   title: const Text('Item 1'),
                   onTap: () {},
                 ),
-
-                const Spacer(), // Pushing Logout to bottom
-                const Divider(),
-
-                // TOMBOL LOGOUT DENGAN BLOC
+                const Spacer(),
                 ListTile(
                   leading: const Icon(Icons.logout, color: Colors.red),
                   title: const Text(
@@ -61,10 +57,7 @@ class HomeScreen extends StatelessWidget {
                     style: TextStyle(color: Colors.red),
                   ),
                   onTap: () {
-                    // 1. Tutup drawer dulu
                     Navigator.pop(context);
-
-                    // 2. Lempar LogoutRequested Event ke AuthBloc
                     context.read<AuthBloc>().add(LogoutRequested());
                   },
                 ),
