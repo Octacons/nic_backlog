@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:nic_backlog/logic/auth/auth_bloc.dart';
+import 'package:nic_backlog/logic/auth/auth_event.dart';
+import 'package:nic_backlog/logic/auth/auth_state.dart';
 import 'package:nic_backlog/presentation/auth/register_screen.dart';
+import 'package:nic_backlog/presentation/home/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -10,8 +15,15 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _loginFormKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
+  final _usernameOrEmailController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _usernameOrEmailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,42 +35,43 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
+              const Text(
                 "Nic-BackLog",
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
               ),
-              Text("Login", style: TextStyle(fontSize: 20)),
+              const Text("Login", style: TextStyle(fontSize: 20)),
               TextFormField(
-                controller: _usernameController,
-                decoration: InputDecoration(label: Text("Username")),
+                controller: _usernameOrEmailController,
+                decoration: const InputDecoration(
+                  label: Text("Username/Email"),
+                ),
                 validator: (value) {
-                  if (value == null || value.trim() == "") {
-                    return "Please Input Username";
-                  } else if (value.length > 4) {
-                    return "Username cant lower than 4 characters";
-                  } else {
-                    return null;
+                  if (value == null || value.trim().isEmpty) {
+                    return "Please Input Username or Email";
+                  } else if (value.trim().length < 4) {
+                    return "Username or email cannot be less than 4 characters";
                   }
+                  return null;
                 },
               ),
               TextFormField(
                 controller: _passwordController,
-                decoration: InputDecoration(label: Text("Password")),
+                obscureText: true,
+                decoration: const InputDecoration(label: Text("Password")),
                 validator: (value) {
-                  if (value == null || value.trim() == "") {
+                  if (value == null || value.trim().isEmpty) {
                     return "Please Input Password";
-                  } else {
-                    return null;
                   }
+                  return null;
                 },
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   InkWell(
-                    child: Text(
-                      "Doesnt have account? Register Here !",
+                    child: const Text(
+                      "Doesn't have an account? Register Here !",
                       style: TextStyle(
                         decoration: TextDecoration.underline,
                         decorationColor: Colors.blue,
@@ -69,19 +82,56 @@ class _LoginScreenState extends State<LoginScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => RegisterScreen(),
+                          builder: (context) => const RegisterScreen(),
                         ),
                       );
                     },
                   ),
                 ],
               ),
-              SizedBox(height: 12),
-              ElevatedButton(
-                onPressed: () {
-                  if (_loginFormKey.currentState!.validate()) {}
+              const SizedBox(height: 12),
+              BlocConsumer<AuthBloc, AuthState>(
+                listener: (context, state) {
+                  if (state is AuthSuccess) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Login Berhasil!"),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (_) => const HomeScreen()),
+                    );
+                  } else if (state is AuthFailure) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(state.error),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
                 },
-                child: Text("LOGIN"),
+                builder: (context, state) {
+                  if (state is AuthLoading) {
+                    return const CircularProgressIndicator();
+                  }
+
+                  return ElevatedButton(
+                    onPressed: () {
+                      if (_loginFormKey.currentState!.validate()) {
+                        // KEKUNCIAN ALUR: Kirim LoginRequested membawa usernameOrEmail & password
+                        context.read<AuthBloc>().add(
+                          LoginRequested(
+                            input: _usernameOrEmailController.text,
+                            password: _passwordController.text,
+                          ),
+                        );
+                      }
+                    },
+                    child: const Text("LOGIN"),
+                  );
+                },
               ),
             ],
           ),

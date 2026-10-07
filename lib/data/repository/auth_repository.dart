@@ -47,4 +47,43 @@ class AuthRepository {
       return e.toString();
     }
   }
+
+  Future<String?> loginUser({
+    required String input,
+    required String password,
+  }) async {
+    try {
+      final cleanInput = input.trim().toLowerCase();
+      String targetEmail = cleanInput;
+
+      if (!cleanInput.contains('@')) {
+        final usernameQuery = await _firestore
+            .collection('users')
+            .where('username', isEqualTo: cleanInput)
+            .get();
+
+        if (usernameQuery.docs.isEmpty) {
+          return "Username tidak ditemukan.";
+        }
+
+        targetEmail = usernameQuery.docs.first.data()['email'] as String;
+      }
+
+      await _auth.signInWithEmailAndPassword(
+        email: targetEmail,
+        password: password,
+      );
+
+      return null;
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
+        return "Password yang kamu masukkan salah.";
+      } else if (e.code == 'user-not-found') {
+        return "Akun tidak terdaftar.";
+      }
+      return e.message ?? "Gagal melakukan login.";
+    } catch (e) {
+      return e.toString();
+    }
+  }
 }

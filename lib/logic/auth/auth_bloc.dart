@@ -8,6 +8,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   AuthBloc({required this.authRepository}) : super(AuthInitial()) {
     on<RegisterRequested>(_onRegisterRequested);
+    on<LoginRequested>(_onLoginRequested);
   }
 
   Future<void> _onRegisterRequested(
@@ -20,6 +21,28 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final errorMsg = await authRepository.registerUser(
         username: event.username,
         email: event.email,
+        password: event.password,
+      );
+
+      if (errorMsg == null) {
+        emit(AuthSuccess());
+      } else {
+        emit(AuthFailure(errorMsg));
+      }
+    } catch (e) {
+      emit(AuthFailure(e.toString()));
+    }
+  }
+
+  Future<void> _onLoginRequested(
+    LoginRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+
+    try {
+      final errorMsg = await authRepository.loginUser(
+        input: event.input,
         password: event.password,
       );
 
