@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:nic_backlog/data/models/game_model.dart';
+import 'package:nic_backlog/data/models/gamelog_model.dart';
 
 class GameRepository {
   final FirebaseFirestore _firestore;
@@ -63,6 +64,60 @@ class GameRepository {
           .toList();
     } catch (e) {
       throw Exception("Gagal mengambil data game: ${e.toString()}");
+    }
+  }
+
+  Future<GameModel> fetchGameById(String gameId) async {
+    try {
+      final doc = await _firestore
+          .collection('users')
+          .doc(_currentUserId)
+          .collection('games')
+          .doc(gameId)
+          .get();
+
+      if (!doc.exists) {
+        throw Exception("Game tidak ditemukan.");
+      }
+
+      final logs = await fetchGameLogs(gameId);
+
+      return GameModel.fromMap(doc.data()!, doc.id, logs: logs);
+    } catch (e) {
+      throw Exception("Gagal mengambil detail game: ${e.toString()}");
+    }
+  }
+
+  Future<List<GameLogModel>> fetchGameLogs(String gameId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(_currentUserId)
+          .collection('games')
+          .doc(gameId)
+          .collection('logs')
+          .orderBy('date', descending: true)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => GameLogModel.fromMap(doc.data(), doc.id))
+          .toList();
+    } catch (e) {
+      throw Exception("Gagal mengambil log game: ${e.toString()}");
+    }
+  }
+
+  Future<void> addGameLog(String gameId, GameLogModel log) async {
+    try {
+      await _firestore
+          .collection('users')
+          .doc(_currentUserId)
+          .collection('games')
+          .doc(gameId)
+          .collection('logs')
+          .add(log.toMap());
+    } catch (e) {
+      throw Exception("Gagal menambahkan log: ${e.toString()}");
     }
   }
 }

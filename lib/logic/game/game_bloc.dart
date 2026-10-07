@@ -8,8 +8,54 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   final GameRepository gameRepository;
 
   GameBloc({required this.gameRepository}) : super(const GameState()) {
-    on<AddGameRequested>(_onAddGameRequested);
     on<FetchGamesRequested>(_onFetchGamesRequested);
+    on<FetchGameDetailRequested>(_onFetchGameDetailRequested);
+    on<AddGameRequested>(_onAddGameRequested);
+    on<AddGameLogRequested>(_onAddGameLogRequested);
+  }
+
+  Future<void> _onFetchGamesRequested(
+    FetchGamesRequested event,
+    Emitter<GameState> emit,
+  ) async {
+    emit(state.copyWith(status: GameStateStatus.loading));
+
+    try {
+      final games = await gameRepository.fetchGames();
+      emit(state.copyWith(status: GameStateStatus.success, games: games));
+    } catch (e) {
+      final cleanError = e.toString().replaceAll('Exception: ', '');
+      emit(
+        state.copyWith(
+          status: GameStateStatus.failure,
+          errorMessage: cleanError,
+        ),
+      );
+    }
+  }
+
+  Future<void> _onFetchGameDetailRequested(
+    FetchGameDetailRequested event,
+    Emitter<GameState> emit,
+  ) async {
+    emit(state.copyWith(status: GameStateStatus.loading));
+    try {
+      final gameDetail = await gameRepository.fetchGameById(event.gameId);
+      emit(
+        state.copyWith(
+          status: GameStateStatus.success,
+          selectedGame: gameDetail,
+        ),
+      );
+    } catch (e) {
+      final cleanError = e.toString().replaceAll('Exception: ', '');
+      emit(
+        state.copyWith(
+          status: GameStateStatus.failure,
+          errorMessage: cleanError,
+        ),
+      );
+    }
   }
 
   Future<void> _onAddGameRequested(
@@ -47,23 +93,16 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     }
   }
 
-  Future<void> _onFetchGamesRequested(
-    FetchGamesRequested event,
+  Future<void> _onAddGameLogRequested(
+    AddGameLogRequested event,
     Emitter<GameState> emit,
   ) async {
-    emit(state.copyWith(status: GameStateStatus.loading));
-
     try {
-      final games = await gameRepository.fetchGames();
-      emit(state.copyWith(status: GameStateStatus.success, games: games));
+      await gameRepository.addGameLog(event.gameId, event.log);
+      add(FetchGameDetailRequested(gameId: event.gameId));
     } catch (e) {
       final cleanError = e.toString().replaceAll('Exception: ', '');
-      emit(
-        state.copyWith(
-          status: GameStateStatus.failure,
-          errorMessage: cleanError,
-        ),
-      );
+      emit(state.copyWith(errorMessage: cleanError));
     }
   }
 }
