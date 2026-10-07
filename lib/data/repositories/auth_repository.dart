@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:nic_backlog/data/model/user_model.dart';
+import 'package:nic_backlog/data/models/user_model.dart';
 
 class AuthRepository {
   final FirebaseAuth _auth = FirebaseAuth.instance;

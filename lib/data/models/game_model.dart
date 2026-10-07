@@ -1,4 +1,4 @@
-import 'package:nic_backlog/data/model/gamelog_model.dart';
+import 'package:nic_backlog/data/models/gamelog_model.dart';
 
 enum GameStatus { playing, completed, backlogged, dropped }
 
