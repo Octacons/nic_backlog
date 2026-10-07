@@ -86,4 +86,12 @@ class AuthRepository {
       return e.toString();
     }
   }
+
+  Future<void> logoutUser() async {
+    try {
+      await _auth.signOut();
+    } catch (e) {
+      throw Exception("Gagal logout: ${e.toString()}");
+    }
+  }
 }
