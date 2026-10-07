@@ -1,10 +1,13 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:nic_backlog/ui/auth/login_screen.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:nic_backlog/data/repository/auth_repository.dart';
+import 'package:nic_backlog/logic/auth/auth_bloc.dart';
+import 'package:nic_backlog/presentation/auth/login_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  Firebase.initializeApp();
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -13,13 +16,30 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Nic BackLog',
-      theme: ThemeData(
-        colorScheme: .fromSeed(seedColor: const Color.fromARGB(255, 178, 0, 0)),
+    return MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider<AuthRepository>(
+          create: (context) => AuthRepository(),
+        ),
+      ],
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider<AuthBloc>(
+            create: (context) =>
+                AuthBloc(authRepository: context.read<AuthRepository>()),
+          ),
+        ],
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Nic BackLog',
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color.fromARGB(255, 178, 0, 0),
+            ),
+          ),
+          home: const LoginScreen(),
+        ),
       ),
-      home: LoginScreen(),
     );
   }
 }

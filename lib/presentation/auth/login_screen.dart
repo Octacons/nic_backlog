@@ -1,25 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:nic_backlog/ui/auth/login_screen.dart';
+import 'package:nic_backlog/presentation/auth/register_screen.dart';
 
-class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
-  final _registerFormKey = GlobalKey<FormState>();
+class _LoginScreenState extends State<LoginScreen> {
+  final _loginFormKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
-  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _validatePasswordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Form(
-        key: _registerFormKey,
+        key: _loginFormKey,
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
@@ -29,7 +27,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 "Nic-BackLog",
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
               ),
-              Text("Register", style: TextStyle(fontSize: 20)),
+              Text("Login", style: TextStyle(fontSize: 20)),
               TextFormField(
                 controller: _usernameController,
                 decoration: InputDecoration(label: Text("Username")),
@@ -38,21 +36,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return "Please Input Username";
                   } else if (value.length > 4) {
                     return "Username cant lower than 4 characters";
-                  } else {
-                    return null;
-                  }
-                },
-              ),
-              TextFormField(
-                controller: _emailController,
-                decoration: InputDecoration(label: Text("Email")),
-                validator: (value) {
-                  if (value == null || value.trim() == "") {
-                    return "Please Input Email";
-                  } else if (!value.contains("@")) {
-                    return "Please input email format";
-                  } else if (value.length > 4) {
-                    return "Email cant lower than 4 characters";
                   } else {
                     return null;
                   }
@@ -69,26 +52,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   }
                 },
               ),
-              TextFormField(
-                controller: _validatePasswordController,
-                decoration: InputDecoration(label: Text("Re-Input Password")),
-                validator: (value) {
-                  if (value == null || value.trim() == "") {
-                    return "Please Input Password";
-                  } else if (_passwordController.text != value) {
-                    return "Please Recheck again your password";
-                  } else {
-                    return null;
-                  }
-                },
-              ),
               SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   InkWell(
                     child: Text(
-                      "You have the account? Login Here !",
+                      "Doesnt have account? Register Here !",
                       style: TextStyle(
                         decoration: TextDecoration.underline,
                         decorationColor: Colors.blue,
@@ -98,7 +68,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => LoginScreen()),
+                        MaterialPageRoute(
+                          builder: (context) => RegisterScreen(),
+                        ),
                       );
                     },
                   ),
@@ -107,9 +79,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
               SizedBox(height: 12),
               ElevatedButton(
                 onPressed: () {
-                  if (_registerFormKey.currentState!.validate()) {}
+                  if (_loginFormKey.currentState!.validate()) {}
                 },
-                child: Text("Register"),
+                child: Text("LOGIN"),
               ),
             ],
           ),
