@@ -99,9 +99,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         backgroundColor: Colors.green,
                       ),
                     );
-                    Navigator.pushReplacement(
+                    Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(builder: (_) => const HomeScreen()),
+                      (route) => false,
                     );
                   } else if (state is AuthFailure) {
                     ScaffoldMessenger.of(context).showSnackBar(
