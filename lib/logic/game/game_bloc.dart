@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:nic_backlog/data/models/game_model.dart';
 import 'package:nic_backlog/data/repositories/game_repository.dart';
 import 'package:nic_backlog/logic/game/game_event.dart';
 import 'package:nic_backlog/logic/game/game_state.dart';
@@ -17,7 +18,23 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     emit(state.copyWith(status: GameStateStatus.loading));
 
     try {
-      await gameRepository.addGame(event.game);
+      String finalImageUrl = event.game.imageUrl;
+
+      if (event.imageFile != null) {
+        finalImageUrl = await gameRepository.uploadGameCover(event.imageFile!);
+      }
+
+      final gameToSave = GameModel(
+        id: event.game.id,
+        title: event.game.title,
+        imageUrl: finalImageUrl,
+        genre: event.game.genre,
+        description: event.game.description,
+        releaseDate: event.game.releaseDate,
+        status: event.game.status,
+      );
+
+      await gameRepository.addGame(gameToSave);
       emit(state.copyWith(status: GameStateStatus.success));
     } catch (e) {
       emit(

@@ -1,7 +1,8 @@
-// lib/presentation/game/add_game_screen.dart
-
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:nic_backlog/data/models/game_model.dart';
 import 'package:nic_backlog/logic/game/game_bloc.dart';
@@ -19,23 +20,59 @@ class _AddGameScreenState extends State<AddGameScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final _titleController = TextEditingController();
-  final _imageUrlController = TextEditingController();
   final _genreController = TextEditingController();
   final _descriptionController = TextEditingController();
 
   DateTime? _selectedReleaseDate;
   GameStatus _selectedStatus = GameStatus.backlogged;
+  File? _selectedImageFile;
 
   @override
   void dispose() {
     _titleController.dispose();
-    _imageUrlController.dispose();
     _genreController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
 
-  // Helper Date Picker
+  Future<void> _pickAndCropImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile == null || !mounted) return;
+
+    final primaryColor = Theme.of(context).primaryColor;
+
+    final croppedFile = await ImageCropper().cropImage(
+      sourcePath: pickedFile.path,
+      compressQuality: 60,
+      maxWidth: 800,
+      maxHeight: 450,
+      aspectRatio: const CropAspectRatio(ratioX: 16, ratioY: 9),
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Crop Cover Image (16:9)',
+          toolbarColor: primaryColor,
+          toolbarWidgetColor: Colors.white,
+          initAspectRatio: CropAspectRatioPreset.ratio16x9,
+          lockAspectRatio: true,
+        ),
+        IOSUiSettings(
+          title: 'Crop Cover Image (16:9)',
+          aspectRatioLockEnabled: true,
+        ),
+      ],
+    );
+
+    if (!mounted) return;
+
+    if (croppedFile != null) {
+      setState(() {
+        _selectedImageFile = File(croppedFile.path);
+      });
+    }
+  }
+
   Future<void> _pickReleaseDate(BuildContext context) async {
     final pickedDate = await showDatePicker(
       context: context,
@@ -53,6 +90,16 @@ class _AddGameScreenState extends State<AddGameScreen> {
 
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
+      if (_selectedImageFile == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Upload foto cover game terlebih dahulu!"),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
       if (_selectedReleaseDate == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -63,19 +110,19 @@ class _AddGameScreenState extends State<AddGameScreen> {
         return;
       }
 
-      // 1. Rakit Objek GameModel dari Input UI
       final newGame = GameModel(
-        id: '', // Generated otomatis oleh Firestore nantinya
+        id: '',
         title: _titleController.text.trim(),
-        imageUrl: _imageUrlController.text.trim(),
+        imageUrl: '',
         genre: _genreController.text.trim(),
         description: _descriptionController.text.trim(),
         releaseDate: _selectedReleaseDate!,
         status: _selectedStatus,
       );
 
-      // 2. Lempar Event ke GameBloc via Provider
-      context.read<GameBloc>().add(AddGameRequested(newGame));
+      context.read<GameBloc>().add(
+        AddGameRequested(game: newGame, imageFile: _selectedImageFile),
+      );
     }
   }
 
@@ -92,7 +139,7 @@ class _AddGameScreenState extends State<AddGameScreen> {
                 backgroundColor: Colors.green,
               ),
             );
-            Navigator.pop(context); // Kembali ke Dashboard
+            Navigator.pop(context);
           } else if (state.status == GameStateStatus.failure) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -112,7 +159,47 @@ class _AddGameScreenState extends State<AddGameScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title Input
+                  // CARD COVER IMAGE (16:9 PREVIEW)
+                  GestureDetector(
+                    onTap: _pickAndCropImage,
+                    child: AspectRatio(
+                      aspectRatio: 16 / 9,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey[400]!),
+                          image: _selectedImageFile != null
+                              ? DecorationImage(
+                                  image: FileImage(_selectedImageFile!),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                        ),
+                        child: _selectedImageFile == null
+                            ? Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: const [
+                                  Icon(
+                                    Icons.add_a_photo,
+                                    size: 40,
+                                    color: Colors.grey,
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    "Tap to Upload Cover (16:9)",
+                                    style: TextStyle(
+                                      color: Colors.grey,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : null,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                   TextFormField(
                     controller: _titleController,
                     decoration: const InputDecoration(
@@ -125,19 +212,6 @@ class _AddGameScreenState extends State<AddGameScreen> {
                         : null,
                   ),
                   const SizedBox(height: 16),
-
-                  // Image URL Input
-                  TextFormField(
-                    controller: _imageUrlController,
-                    decoration: const InputDecoration(
-                      labelText: "Image Cover URL",
-                      hintText: "https://example.com/poster.jpg",
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Genre Input
                   TextFormField(
                     controller: _genreController,
                     decoration: const InputDecoration(
@@ -150,8 +224,6 @@ class _AddGameScreenState extends State<AddGameScreen> {
                         : null,
                   ),
                   const SizedBox(height: 16),
-
-                  // Status Dropdown
                   DropdownButtonFormField<GameStatus>(
                     initialValue: _selectedStatus,
                     decoration: const InputDecoration(
@@ -173,8 +245,6 @@ class _AddGameScreenState extends State<AddGameScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
-
-                  // Date Picker Section
                   InkWell(
                     onTap: () => _pickReleaseDate(context),
                     child: InputDecorator(
@@ -193,8 +263,6 @@ class _AddGameScreenState extends State<AddGameScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // Description Input
                   TextFormField(
                     controller: _descriptionController,
                     maxLines: 3,
@@ -205,8 +273,6 @@ class _AddGameScreenState extends State<AddGameScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-
-                  // Submit Button
                   SizedBox(
                     width: double.infinity,
                     height: 50,
