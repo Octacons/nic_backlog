@@ -120,7 +120,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   return ElevatedButton(
                     onPressed: () {
                       if (_loginFormKey.currentState!.validate()) {
-                        // KEKUNCIAN ALUR: Kirim LoginRequested membawa usernameOrEmail & password
                         context.read<AuthBloc>().add(
                           LoginRequested(
                             input: _usernameOrEmailController.text,
