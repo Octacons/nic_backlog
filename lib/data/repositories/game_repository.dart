@@ -49,4 +49,20 @@ class GameRepository {
       throw Exception("Gagal menambahkan game: ${e.toString()}");
     }
   }
+
+  Future<List<GameModel>> fetchGames() async {
+    try {
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(_currentUserId)
+          .collection('games')
+          .get();
+
+      return snapshot.docs
+          .map((doc) => GameModel.fromMap(doc.data(), doc.id))
+          .toList();
+    } catch (e) {
+      throw Exception("Gagal mengambil data game: ${e.toString()}");
+    }
+  }
 }

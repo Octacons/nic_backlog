@@ -17,3 +17,7 @@ class AddGameRequested extends GameEvent {
   @override
   List<Object?> get props => [game, imageFile];
 }
+
+class FetchGamesRequested extends GameEvent {
+  const FetchGamesRequested();
+}

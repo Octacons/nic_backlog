@@ -12,6 +12,7 @@ class GameModel {
   final GameStatus status;
   final double overallRating;
   final List<GameLogModel> logs;
+
   GameModel({
     required this.id,
     required this.title,
@@ -25,7 +26,7 @@ class GameModel {
   });
 
   static GameStatus _stringToStatus(String statusStr) {
-    switch (statusStr) {
+    switch (statusStr.toLowerCase()) {
       case 'playing':
         return GameStatus.playing;
       case 'completed':
@@ -48,7 +49,9 @@ class GameModel {
       imageUrl: map['imageUrl'] ?? '',
       genre: map['genre'] ?? '',
       description: map['description'] ?? '',
-      releaseDate: DateTime.parse(map['releaseDate']),
+      releaseDate: map['releaseDate'] != null
+          ? DateTime.tryParse(map['releaseDate'].toString()) ?? DateTime.now()
+          : DateTime.now(),
       status: _stringToStatus(map['status'] ?? 'backlogged'),
       overallRating: (map['overallRating'] as num?)?.toDouble() ?? 0.0,
       logs: logs ?? [],
@@ -65,5 +68,29 @@ class GameModel {
       'status': status.name,
       'overallRating': overallRating,
     };
+  }
+
+  GameModel copyWith({
+    String? id,
+    String? title,
+    String? imageUrl,
+    String? genre,
+    String? description,
+    DateTime? releaseDate,
+    GameStatus? status,
+    double? overallRating,
+    List<GameLogModel>? logs,
+  }) {
+    return GameModel(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      imageUrl: imageUrl ?? this.imageUrl,
+      genre: genre ?? this.genre,
+      description: description ?? this.description,
+      releaseDate: releaseDate ?? this.releaseDate,
+      status: status ?? this.status,
+      overallRating: overallRating ?? this.overallRating,
+      logs: logs ?? this.logs,
+    );
   }
 }

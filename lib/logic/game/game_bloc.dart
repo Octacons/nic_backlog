@@ -9,6 +9,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
 
   GameBloc({required this.gameRepository}) : super(const GameState()) {
     on<AddGameRequested>(_onAddGameRequested);
+    on<FetchGamesRequested>(_onFetchGamesRequested);
   }
 
   Future<void> _onAddGameRequested(
@@ -41,6 +42,26 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         state.copyWith(
           status: GameStateStatus.failure,
           errorMessage: e.toString(),
+        ),
+      );
+    }
+  }
+
+  Future<void> _onFetchGamesRequested(
+    FetchGamesRequested event,
+    Emitter<GameState> emit,
+  ) async {
+    emit(state.copyWith(status: GameStateStatus.loading));
+
+    try {
+      final games = await gameRepository.fetchGames();
+      emit(state.copyWith(status: GameStateStatus.success, games: games));
+    } catch (e) {
+      final cleanError = e.toString().replaceAll('Exception: ', '');
+      emit(
+        state.copyWith(
+          status: GameStateStatus.failure,
+          errorMessage: cleanError,
         ),
       );
     }
