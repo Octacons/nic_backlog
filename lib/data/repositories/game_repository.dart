@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:nic_backlog/data/models/game_model.dart';
 import 'package:nic_backlog/data/models/gamelog_model.dart';
+import 'package:nic_backlog/utils/app_logger.dart';
 
 class GameRepository {
   final FirebaseFirestore _firestore;
@@ -19,12 +20,24 @@ class GameRepository {
 
   String get _currentUserId {
     final user = _auth.currentUser;
-    if (user == null) throw Exception("User belum login.");
+    if (user == null) {
+      AppLogger.log(
+        '[AUTH] Gagal: User belum login / session kosong',
+        name: 'GameRepository._currentUserId',
+      );
+      throw Exception("User belum login.");
+    }
     return user.uid;
   }
 
   Future<String> uploadGameCover(File imageFile) async {
+    const logTag = 'GameRepository.uploadGameCover';
     try {
+      AppLogger.request(
+        'Memproses file cover: ${imageFile.path}',
+        name: logTag,
+      );
+
       if (!await imageFile.exists()) {
         throw Exception("File gambar tidak ditemukan di penyimpanan lokal.");
       }
@@ -33,42 +46,94 @@ class GameRepository {
       final base64String = base64Encode(bytes);
       final formattedBase64 = 'data:image/jpeg;base64,$base64String';
 
+      AppLogger.response(
+        'Berhasil encode base64 (Ukuran file: ${bytes.lengthInBytes} bytes)',
+        name: logTag,
+      );
+
       return formattedBase64;
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Gagal memproses gambar: $e',
+        name: logTag,
+        error: e,
+        stackTrace: stackTrace,
+      );
       throw Exception("Gagal memproses gambar: ${e.toString()}");
     }
   }
 
   Future<void> addGame(GameModel game) async {
+    const logTag = 'GameRepository.addGame';
     try {
-      await _firestore
+      final payload = game.toMap();
+      AppLogger.request(
+        'Menambahkan game baru untuk User [$_currentUserId]:\nPayload: $payload',
+        name: logTag,
+      );
+
+      final docRef = await _firestore
           .collection('users')
           .doc(_currentUserId)
           .collection('games')
-          .add(game.toMap());
-    } catch (e) {
+          .add(payload);
+
+      AppLogger.response(
+        'Sukses menambahkan game! Document ID: ${docRef.id}',
+        name: logTag,
+      );
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Gagal menambahkan game: $e',
+        name: logTag,
+        error: e,
+        stackTrace: stackTrace,
+      );
       throw Exception("Gagal menambahkan game: ${e.toString()}");
     }
   }
 
   Future<List<GameModel>> fetchGames() async {
+    const logTag = 'GameRepository.fetchGames';
     try {
+      AppLogger.request(
+        'Mengambil daftar game untuk User [$_currentUserId]...',
+        name: logTag,
+      );
+
       final snapshot = await _firestore
           .collection('users')
           .doc(_currentUserId)
           .collection('games')
           .get();
 
+      AppLogger.log(
+        '[RESPONSE] Sukses mengambil game. Total item: ${snapshot.docs.length}',
+        name: logTag,
+      );
+
       return snapshot.docs
           .map((doc) => GameModel.fromMap(doc.data(), doc.id))
           .toList();
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLogger.log(
+        '[ERROR] Gagal mengambil data game: $e',
+        name: logTag,
+        error: e,
+        stackTrace: stackTrace,
+      );
       throw Exception("Gagal mengambil data game: ${e.toString()}");
     }
   }
 
   Future<GameModel> fetchGameById(String gameId) async {
+    const logTag = 'GameRepository.fetchGameById';
     try {
+      AppLogger.log(
+        '[REQUEST] Mengambil detail game [$gameId] untuk User [$_currentUserId]...',
+        name: logTag,
+      );
+
       final doc = await _firestore
           .collection('users')
           .doc(_currentUserId)
@@ -77,19 +142,40 @@ class GameRepository {
           .get();
 
       if (!doc.exists) {
+        AppLogger.log(
+          '[ERROR] Game ID [$gameId] tidak ditemukan di Firestore',
+          name: logTag,
+        );
         throw Exception("Game tidak ditemukan.");
       }
+
+      AppLogger.log(
+        '[RESPONSE] Dokumen game ditemukan: ${doc.data()}',
+        name: logTag,
+      );
 
       final logs = await fetchGameLogs(gameId);
 
       return GameModel.fromMap(doc.data()!, doc.id, logs: logs);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLogger.log(
+        '[ERROR] Gagal mengambil detail game [$gameId]: $e',
+        name: logTag,
+        error: e,
+        stackTrace: stackTrace,
+      );
       throw Exception("Gagal mengambil detail game: ${e.toString()}");
     }
   }
 
   Future<List<GameLogModel>> fetchGameLogs(String gameId) async {
+    const logTag = 'GameRepository.fetchGameLogs';
     try {
+      AppLogger.log(
+        '[REQUEST] Mengambil logs untuk game [$gameId]...',
+        name: logTag,
+      );
+
       final snapshot = await _firestore
           .collection('users')
           .doc(_currentUserId)
@@ -99,24 +185,53 @@ class GameRepository {
           .orderBy('date', descending: true)
           .get();
 
+      AppLogger.log(
+        '[RESPONSE] Sukses mengambil logs game [$gameId]. Total logs: ${snapshot.docs.length}',
+        name: logTag,
+      );
+
       return snapshot.docs
           .map((doc) => GameLogModel.fromMap(doc.data(), doc.id))
           .toList();
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLogger.log(
+        '[ERROR] Gagal mengambil log game [$gameId]: $e',
+        name: logTag,
+        error: e,
+        stackTrace: stackTrace,
+      );
       throw Exception("Gagal mengambil log game: ${e.toString()}");
     }
   }
 
   Future<void> addGameLog(String gameId, GameLogModel log) async {
+    const logTag = 'GameRepository.addGameLog';
     try {
-      await _firestore
+      final payload = log.toMap();
+      AppLogger.log(
+        '[REQUEST] Menambahkan log baru ke game [$gameId]:\nPayload: $payload',
+        name: logTag,
+      );
+
+      final docRef = await _firestore
           .collection('users')
           .doc(_currentUserId)
           .collection('games')
           .doc(gameId)
           .collection('logs')
-          .add(log.toMap());
-    } catch (e) {
+          .add(payload);
+
+      AppLogger.log(
+        '[RESPONSE] Sukses menambahkan log! Document ID: ${docRef.id}',
+        name: logTag,
+      );
+    } catch (e, stackTrace) {
+      AppLogger.log(
+        '[ERROR] Gagal menambahkan log ke game [$gameId]: $e',
+        name: logTag,
+        error: e,
+        stackTrace: stackTrace,
+      );
       throw Exception("Gagal menambahkan log: ${e.toString()}");
     }
   }
