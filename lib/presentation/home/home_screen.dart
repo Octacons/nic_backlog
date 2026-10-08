@@ -8,7 +8,7 @@ import 'package:nic_backlog/logic/game/game_bloc.dart';
 import 'package:nic_backlog/logic/game/game_event.dart';
 import 'package:nic_backlog/logic/game/game_state.dart';
 import 'package:nic_backlog/presentation/auth/login_screen.dart';
-import 'package:nic_backlog/presentation/game/add_game_screen.dart';
+import 'package:nic_backlog/presentation/game/create_update_game_screen.dart';
 import 'package:nic_backlog/presentation/game/detail_game_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -247,7 +247,9 @@ class _HomeScreenState extends State<HomeScreen> {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const AddGameScreen()),
+              MaterialPageRoute(
+                builder: (context) => const CreateUpdateGameScreen(),
+              ),
             );
           },
           backgroundColor: Colors.redAccent,

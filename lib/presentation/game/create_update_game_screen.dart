@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -29,12 +30,43 @@ class _CreateUpdateGameScreenState extends State<CreateUpdateGameScreen> {
   GameStatus _selectedStatus = GameStatus.backlogged;
   File? _selectedImageFile;
 
+  bool get _isEditMode => widget.game != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isEditMode) {
+      _titleController.text = widget.game!.title;
+      _genreController.text = widget.game!.genre;
+      _descriptionController.text = widget.game!.description;
+      _selectedReleaseDate = widget.game!.releaseDate;
+      _selectedStatus = widget.game!.status;
+    }
+  }
+
   @override
   void dispose() {
     _titleController.dispose();
     _genreController.dispose();
     _descriptionController.dispose();
     super.dispose();
+  }
+
+  ImageProvider? _getCoverImageProvider() {
+    if (_selectedImageFile != null) {
+      return FileImage(_selectedImageFile!);
+    }
+
+    final existingImage = widget.game?.imageUrl;
+    if (existingImage != null && existingImage.isNotEmpty) {
+      if (existingImage.startsWith('data:image')) {
+        final base64Clean = existingImage.split(',').last;
+        return MemoryImage(base64Decode(base64Clean));
+      } else {
+        return NetworkImage(existingImage);
+      }
+    }
+    return null;
   }
 
   Future<void> _pickAndCropImage() async {
@@ -161,43 +193,48 @@ class _CreateUpdateGameScreenState extends State<CreateUpdateGameScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // CARD COVER IMAGE (16:9 PREVIEW)
                   GestureDetector(
                     onTap: _pickAndCropImage,
                     child: AspectRatio(
                       aspectRatio: 16 / 9,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey[400]!),
-                          image: _selectedImageFile != null
-                              ? DecorationImage(
-                                  image: FileImage(_selectedImageFile!),
-                                  fit: BoxFit.cover,
-                                )
-                              : null,
-                        ),
-                        child: _selectedImageFile == null
-                            ? Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
-                                  Icon(
-                                    Icons.add_a_photo,
-                                    size: 40,
-                                    color: Colors.grey,
-                                  ),
-                                  SizedBox(height: 8),
-                                  Text(
-                                    "Tap to Upload Cover (16:9)",
-                                    style: TextStyle(
-                                      color: Colors.grey,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              )
-                            : null,
+                      child: Builder(
+                        builder: (context) {
+                          final imageProvider = _getCoverImageProvider();
+
+                          return Container(
+                            decoration: BoxDecoration(
+                              color: Colors.grey[200],
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey[400]!),
+                              image: imageProvider != null
+                                  ? DecorationImage(
+                                      image: imageProvider,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : null,
+                            ),
+                            child: imageProvider == null
+                                ? Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: const [
+                                      Icon(
+                                        Icons.add_a_photo,
+                                        size: 40,
+                                        color: Colors.grey,
+                                      ),
+                                      SizedBox(height: 8),
+                                      Text(
+                                        "Tap to Upload Cover (16:9)",
+                                        style: TextStyle(
+                                          color: Colors.grey,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : null,
+                          );
+                        },
                       ),
                     ),
                   ),
