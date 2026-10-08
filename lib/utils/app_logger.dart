@@ -45,7 +45,7 @@ class AppLogger {
     StackTrace? stackTrace,
   }) {
     log(
-      '❌ [ERROR] $message',
+      '[ERROR] $message',
       name: name,
       error: error,
       stackTrace: stackTrace,
