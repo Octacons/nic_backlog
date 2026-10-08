@@ -41,3 +41,13 @@ class AddGameLogRequested extends GameEvent {
   @override
   List<Object?> get props => [gameId, log];
 }
+
+class UpdateGameRequested extends GameEvent {
+  final GameModel game;
+  final File? imageFile;
+
+  const UpdateGameRequested({required this.game, this.imageFile});
+
+  @override
+  List<Object?> get props => [game, imageFile];
+}

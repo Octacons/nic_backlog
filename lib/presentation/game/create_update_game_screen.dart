@@ -124,7 +124,11 @@ class _CreateUpdateGameScreenState extends State<CreateUpdateGameScreen> {
 
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
-      if (_selectedImageFile == null) {
+      final hasImage =
+          _selectedImageFile != null ||
+          (widget.game?.imageUrl.isNotEmpty ?? false);
+
+      if (!hasImage) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Upload foto cover game terlebih dahulu!"),
@@ -143,20 +147,33 @@ class _CreateUpdateGameScreenState extends State<CreateUpdateGameScreen> {
         );
         return;
       }
+      if (_isEditMode) {
+        final updatedGame = widget.game!.copyWith(
+          title: _titleController.text.trim(),
+          genre: _genreController.text.trim(),
+          description: _descriptionController.text.trim(),
+          releaseDate: _selectedReleaseDate!,
+          status: _selectedStatus,
+        );
 
-      final newGame = GameModel(
-        id: '',
-        title: _titleController.text.trim(),
-        imageUrl: '',
-        genre: _genreController.text.trim(),
-        description: _descriptionController.text.trim(),
-        releaseDate: _selectedReleaseDate!,
-        status: _selectedStatus,
-      );
+        context.read<GameBloc>().add(
+          UpdateGameRequested(game: updatedGame, imageFile: _selectedImageFile),
+        );
+      } else {
+        final newGame = GameModel(
+          id: '',
+          title: _titleController.text.trim(),
+          imageUrl: '',
+          genre: _genreController.text.trim(),
+          description: _descriptionController.text.trim(),
+          releaseDate: _selectedReleaseDate!,
+          status: _selectedStatus,
+        );
 
-      context.read<GameBloc>().add(
-        AddGameRequested(game: newGame, imageFile: _selectedImageFile),
-      );
+        context.read<GameBloc>().add(
+          AddGameRequested(game: newGame, imageFile: _selectedImageFile),
+        );
+      }
     }
   }
 

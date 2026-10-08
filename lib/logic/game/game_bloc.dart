@@ -12,6 +12,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     on<FetchGameDetailRequested>(_onFetchGameDetailRequested);
     on<AddGameRequested>(_onAddGameRequested);
     on<AddGameLogRequested>(_onAddGameLogRequested);
+    on<UpdateGameRequested>(_onUpdateGameRequested);
   }
 
   Future<void> _onFetchGamesRequested(
@@ -103,6 +104,37 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     } catch (e) {
       final cleanError = e.toString().replaceAll('Exception: ', '');
       emit(state.copyWith(errorMessage: cleanError));
+    }
+  }
+
+  Future<void> _onUpdateGameRequested(
+    UpdateGameRequested event,
+    Emitter<GameState> emit,
+  ) async {
+    emit(state.copyWith(status: GameStateStatus.loading));
+    try {
+      await gameRepository.updateGame(
+        game: event.game,
+        imageFile: event.imageFile,
+      );
+      final updatedGames = await gameRepository.fetchGames();
+
+      emit(
+        state.copyWith(
+          status: GameStateStatus.success,
+          games: updatedGames,
+          selectedGame: state.selectedGame?.id == event.game.id
+              ? event.game
+              : state.selectedGame,
+        ),
+      );
+    } catch (e) {
+      emit(
+        state.copyWith(
+          status: GameStateStatus.failure,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 }
