@@ -9,14 +9,16 @@ import 'package:nic_backlog/logic/game/game_bloc.dart';
 import 'package:nic_backlog/logic/game/game_event.dart';
 import 'package:nic_backlog/logic/game/game_state.dart';
 
-class AddGameScreen extends StatefulWidget {
-  const AddGameScreen({super.key});
+class CreateUpdateGameScreen extends StatefulWidget {
+  final GameModel? game;
+
+  const CreateUpdateGameScreen({super.key, this.game});
 
   @override
-  State<AddGameScreen> createState() => _AddGameScreenState();
+  State<CreateUpdateGameScreen> createState() => _CreateUpdateGameScreenState();
 }
 
-class _AddGameScreenState extends State<AddGameScreen> {
+class _CreateUpdateGameScreenState extends State<CreateUpdateGameScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final _titleController = TextEditingController();
