@@ -9,6 +9,7 @@ import 'package:nic_backlog/logic/game/game_event.dart';
 import 'package:nic_backlog/logic/game/game_state.dart';
 import 'package:nic_backlog/logic/game_log/game_log_bloc.dart';
 import 'package:nic_backlog/logic/game_log/game_log_event.dart';
+import 'package:nic_backlog/logic/game_log/game_log_state.dart';
 import 'package:nic_backlog/presentation/game/create_update_game_screen.dart';
 
 class GameDetailScreen extends StatefulWidget {
@@ -63,6 +64,7 @@ class _GameDetailScreenState extends State<GameDetailScreen> {
     return MultiBlocProvider(
       providers: [
         BlocProvider<GameLogBloc>(
+          lazy: false,
           create: (context) =>
               GameLogBloc(gameLogRepository: context.read<GameLogRepository>())
                 ..add(FetchGameLogsRequested(gameId: widget.gameId)),
@@ -237,6 +239,137 @@ class _GameDetailScreenState extends State<GameDetailScreen> {
                       ? game.description
                       : "Tidak ada deskripsi.",
                   style: TextStyle(color: Colors.black, height: 1.4),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Game Logs & Jurnal",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.add_circle,
+                        color: Colors.redAccent,
+                      ),
+                      onPressed: () {},
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                BlocBuilder<GameLogBloc, GameLogState>(
+                  builder: (context, state) {
+                    if (state.status == GameLogStatus.loading) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24),
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+
+                    if (state.status == GameLogStatus.failure) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Center(
+                          child: Text(
+                            state.errorMessage ?? "Gagal memuat log permainan.",
+                            style: const TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      );
+                    }
+
+                    final logs = state.logs;
+
+                    if (logs.isEmpty) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: Center(
+                          child: Text(
+                            "Belum ada log permainan.\nKlik tombol + untuk menambah jurnal baru!",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: logs.length,
+                      itemBuilder: (context, index) {
+                        final log = logs[index];
+                        final dateStr =
+                            "${log.date.day.toString().padLeft(2, '0')}/${log.date.month.toString().padLeft(2, '0')}/${log.date.year}";
+
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          child: ListTile(
+                            title: Text(
+                              log.title,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Tanggal: $dateStr",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[500],
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  log.note,
+                                  maxLines: 4,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 4),
+                              ],
+                            ),
+                            trailing: log.rating != null
+                                ? Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.amber.withValues(
+                                        alpha: 0.2,
+                                      ),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.star,
+                                          size: 14,
+                                          color: Colors.amber,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          log.rating!.toStringAsFixed(1),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.amber,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : null,
+                          ),
+                        );
+                      },
+                    );
+                  },
                 ),
               ],
             ),
