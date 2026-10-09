@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nic_backlog/data/repositories/auth_repository.dart';
+import 'package:nic_backlog/data/repositories/game_log_repository.dart';
 import 'package:nic_backlog/data/repositories/game_repository.dart';
 import 'package:nic_backlog/logic/auth/auth_bloc.dart';
 import 'package:nic_backlog/logic/game/game_bloc.dart';
@@ -26,6 +27,10 @@ class MyApp extends StatelessWidget {
 
         RepositoryProvider<GameRepository>(
           create: (context) => GameRepository(),
+        ),
+
+        RepositoryProvider<GameLogRepository>(
+          create: (context) => GameLogRepository(),
         ),
       ],
       child: MultiBlocProvider(

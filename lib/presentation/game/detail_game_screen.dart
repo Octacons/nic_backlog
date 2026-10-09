@@ -3,10 +3,12 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nic_backlog/data/models/game_model.dart';
-import 'package:nic_backlog/data/models/gamelog_model.dart';
+import 'package:nic_backlog/data/repositories/game_log_repository.dart';
 import 'package:nic_backlog/logic/game/game_bloc.dart';
 import 'package:nic_backlog/logic/game/game_event.dart';
 import 'package:nic_backlog/logic/game/game_state.dart';
+import 'package:nic_backlog/logic/game_log/game_log_bloc.dart';
+import 'package:nic_backlog/logic/game_log/game_log_event.dart';
 import 'package:nic_backlog/presentation/game/create_update_game_screen.dart';
 
 class GameDetailScreen extends StatefulWidget {
@@ -56,187 +58,86 @@ class _GameDetailScreenState extends State<GameDetailScreen> {
     );
   }
 
-  void _showAddLogBottomSheet(BuildContext context) {
-    final titleController = TextEditingController();
-    final noteController = TextEditingController();
-    final ratingController = TextEditingController();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (bottomSheetContext) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom + 20,
-            top: 20,
-            left: 20,
-            right: 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "Tambah Game Log",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(
-                  labelText: "Judul Log / Activity",
-                  hintText: "Misal: Selesai Chapter 1",
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.title),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: noteController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: "Catatan Progress / Impresi",
-                  hintText: "Misal: Boss pertamanya gampang banget!",
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.notes),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: ratingController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                decoration: const InputDecoration(
-                  labelText: "Rating Sesi Ini (Opsional 1.0 - 5.0)",
-                  hintText: "4.5",
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.star_outline),
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  onPressed: () {
-                    final title = titleController.text.trim();
-                    final note = noteController.text.trim();
-                    final rating = double.tryParse(ratingController.text);
-
-                    if (title.isEmpty || note.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Judul dan Catatan wajib diisi."),
-                        ),
-                      );
-                      return;
-                    }
-
-                    final newLog = GameLogModel(
-                      id: '',
-                      title: title,
-                      note: note,
-                      date: DateTime.now(),
-                      rating: rating,
-                    );
-
-                    context.read<GameBloc>().add(
-                      AddGameLogRequested(gameId: widget.gameId, log: newLog),
-                    );
-
-                    Navigator.pop(bottomSheetContext);
-                  },
-                  child: const Text(
-                    "Simpan Log",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<GameBloc, GameState>(
-      listener: (context, state) {
-        if (state.status == GameStateStatus.failure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.errorMessage ?? "Terjadi kesalahan"),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        if (state.status == GameStateStatus.success &&
-            state.selectedGame == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Game berhasil dihapus"),
-              backgroundColor: Colors.green,
-            ),
-          );
-          Navigator.pop(context);
-        }
-      },
-      builder: (context, state) {
-        final game = state.selectedGame;
-
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text("Game Detail"),
-            actions: [
-              PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert),
-                onSelected: (value) {
-                  if (value == 'edit') {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            CreateUpdateGameScreen(game: game),
-                      ),
-                    );
-                  } else if (value == 'delete') {}
-                },
-                itemBuilder: (BuildContext context) => [
-                  const PopupMenuItem<String>(
-                    value: 'edit',
-                    child: Row(
-                      children: [
-                        Icon(Icons.edit, size: 20),
-                        SizedBox(width: 8),
-                        Text('Edit'),
-                      ],
-                    ),
-                  ),
-                  const PopupMenuItem<String>(
-                    value: 'delete',
-                    child: Row(
-                      children: [
-                        Icon(Icons.delete, size: 20),
-                        SizedBox(width: 8),
-                        Text('Delete'),
-                      ],
-                    ),
-                  ),
-                ],
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<GameLogBloc>(
+          create: (context) =>
+              GameLogBloc(gameLogRepository: context.read<GameLogRepository>())
+                ..add(FetchGameLogsRequested(gameId: widget.gameId)),
+        ),
+      ],
+      child: BlocConsumer<GameBloc, GameState>(
+        listener: (context, state) {
+          if (state.status == GameStateStatus.failure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.errorMessage ?? "Terjadi kesalahan"),
+                backgroundColor: Colors.red,
               ),
-            ],
-          ),
-          body: _buildBody(state, game),
-        );
-      },
+            );
+          }
+          if (state.status == GameStateStatus.success &&
+              state.selectedGame == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Game berhasil dihapus"),
+                backgroundColor: Colors.green,
+              ),
+            );
+            Navigator.pop(context);
+          }
+        },
+        builder: (context, state) {
+          final game = state.selectedGame;
+
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text("Game Detail"),
+              actions: [
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert),
+                  onSelected: (value) {
+                    if (value == 'edit') {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              CreateUpdateGameScreen(game: game),
+                        ),
+                      );
+                    } else if (value == 'delete') {}
+                  },
+                  itemBuilder: (BuildContext context) => [
+                    const PopupMenuItem<String>(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit, size: 20),
+                          SizedBox(width: 8),
+                          Text('Edit'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, size: 20),
+                          SizedBox(width: 8),
+                          Text('Delete'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            body: _buildBody(state, game),
+          );
+        },
+      ),
     );
   }
 
@@ -337,107 +238,6 @@ class _GameDetailScreenState extends State<GameDetailScreen> {
                       : "Tidak ada deskripsi.",
                   style: TextStyle(color: Colors.black, height: 1.4),
                 ),
-
-                const Divider(height: 32, thickness: 1),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      "Game Logs & Jurnal",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.add_circle,
-                        color: Colors.redAccent,
-                      ),
-                      onPressed: () => _showAddLogBottomSheet(context),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-
-                if (game.logs.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    child: Center(
-                      child: Text(
-                        "Belum ada log permainan.\nKlik tombol + untuk menambah jurnal baru!",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ),
-                  )
-                else
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: game.logs.length,
-                    itemBuilder: (context, index) {
-                      final log = game.logs[index];
-                      final dateStr =
-                          "${log.date.day}/${log.date.month}/${log.date.year}";
-
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: ListTile(
-                          title: Text(
-                            log.title,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 4),
-                              Text(log.note),
-                              const SizedBox(height: 4),
-                              Text(
-                                "Tanggal: $dateStr",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[500],
-                                ),
-                              ),
-                            ],
-                          ),
-                          trailing: log.rating != null
-                              ? Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.amber.withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(
-                                        Icons.star,
-                                        size: 14,
-                                        color: Colors.amber,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        log.rating!.toStringAsFixed(1),
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.amber,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                )
-                              : null,
-                        ),
-                      );
-                    },
-                  ),
               ],
             ),
           ),

@@ -11,7 +11,6 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     on<FetchGamesRequested>(_onFetchGamesRequested);
     on<FetchGameDetailRequested>(_onFetchGameDetailRequested);
     on<AddGameRequested>(_onAddGameRequested);
-    on<AddGameLogRequested>(_onAddGameLogRequested);
     on<UpdateGameRequested>(_onUpdateGameRequested);
   }
 
@@ -91,19 +90,6 @@ class GameBloc extends Bloc<GameEvent, GameState> {
           errorMessage: e.toString(),
         ),
       );
-    }
-  }
-
-  Future<void> _onAddGameLogRequested(
-    AddGameLogRequested event,
-    Emitter<GameState> emit,
-  ) async {
-    try {
-      await gameRepository.addGameLog(event.gameId, event.log);
-      add(FetchGameDetailRequested(gameId: event.gameId));
-    } catch (e) {
-      final cleanError = e.toString().replaceAll('Exception: ', '');
-      emit(state.copyWith(errorMessage: cleanError));
     }
   }
 

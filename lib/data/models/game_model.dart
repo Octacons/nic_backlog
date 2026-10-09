@@ -1,4 +1,4 @@
-import 'package:nic_backlog/data/models/gamelog_model.dart';
+import 'package:nic_backlog/data/models/game_log_model.dart';
 
 enum GameStatus { playing, completed, backlogged, dropped }
 
@@ -11,7 +11,6 @@ class GameModel {
   final DateTime releaseDate;
   final GameStatus status;
   final double overallRating;
-  final List<GameLogModel> logs;
 
   GameModel({
     required this.id,
@@ -22,7 +21,6 @@ class GameModel {
     required this.releaseDate,
     required this.status,
     this.overallRating = 0.0,
-    this.logs = const [],
   });
 
   static GameStatus _stringToStatus(String statusStr) {
@@ -54,7 +52,6 @@ class GameModel {
           : DateTime.now(),
       status: _stringToStatus(map['status'] ?? 'backlogged'),
       overallRating: (map['overallRating'] as num?)?.toDouble() ?? 0.0,
-      logs: logs ?? [],
     );
   }
 
@@ -90,7 +87,6 @@ class GameModel {
       releaseDate: releaseDate ?? this.releaseDate,
       status: status ?? this.status,
       overallRating: overallRating ?? this.overallRating,
-      logs: logs ?? this.logs,
     );
   }
 }

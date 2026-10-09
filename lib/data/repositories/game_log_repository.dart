@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:nic_backlog/data/models/gamelog_model.dart';
+import 'package:nic_backlog/data/models/game_log_model.dart';
 import 'package:nic_backlog/utils/app_logger.dart';
 
 class GameLogRepository {
