@@ -50,7 +50,6 @@ class GameLogBloc extends Bloc<GameLogEvent, GameLogState> {
       );
       await _gameLogRepository.addGameLog(event.gameId, event.log);
 
-      // Re-fetch log list terbaru agar state sinkron
       final updatedLogs = await _gameLogRepository.fetchGameLogs(event.gameId);
       emit(state.copyWith(status: GameLogStatus.success, logs: updatedLogs));
     } catch (e) {
