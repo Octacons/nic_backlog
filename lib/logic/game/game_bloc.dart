@@ -7,7 +7,7 @@ import 'package:nic_backlog/logic/game/game_state.dart';
 class GameBloc extends Bloc<GameEvent, GameState> {
   final GameRepository gameRepository;
 
-  GameBloc({required this.gameRepository}) : super(const GameState()) {
+  GameBloc({required this.gameRepository}) : super(GameInitial()) {
     on<FetchGamesRequested>(_onFetchGamesRequested);
     on<FetchGameDetailRequested>(_onFetchGameDetailRequested);
     on<AddGameRequested>(_onAddGameRequested);
@@ -18,19 +18,17 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     FetchGamesRequested event,
     Emitter<GameState> emit,
   ) async {
-    emit(state.copyWith(status: GameStateStatus.loading));
+    final currentSelected = state is GameSuccess
+        ? (state as GameSuccess).selectedGame
+        : null;
+    emit(GameLoading());
 
     try {
       final games = await gameRepository.fetchGames();
-      emit(state.copyWith(status: GameStateStatus.success, games: games));
+      emit(GameSuccess(games: games, selectedGame: currentSelected));
     } catch (e) {
       final cleanError = e.toString().replaceAll('Exception: ', '');
-      emit(
-        state.copyWith(
-          status: GameStateStatus.failure,
-          errorMessage: cleanError,
-        ),
-      );
+      emit(GameFailure(cleanError));
     }
   }
 
@@ -38,23 +36,16 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     FetchGameDetailRequested event,
     Emitter<GameState> emit,
   ) async {
-    emit(state.copyWith(status: GameStateStatus.loading));
+    final currentGames = state is GameSuccess
+        ? (state as GameSuccess).games
+        : const <GameModel>[];
+    emit(GameLoading());
     try {
       final gameDetail = await gameRepository.fetchGameById(event.gameId);
-      emit(
-        state.copyWith(
-          status: GameStateStatus.success,
-          selectedGame: gameDetail,
-        ),
-      );
+      emit(GameSuccess(games: currentGames, selectedGame: gameDetail));
     } catch (e) {
       final cleanError = e.toString().replaceAll('Exception: ', '');
-      emit(
-        state.copyWith(
-          status: GameStateStatus.failure,
-          errorMessage: cleanError,
-        ),
-      );
+      emit(GameFailure(cleanError));
     }
   }
 
@@ -62,7 +53,10 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     AddGameRequested event,
     Emitter<GameState> emit,
   ) async {
-    emit(state.copyWith(status: GameStateStatus.loading));
+    final currentSelected = state is GameSuccess
+        ? (state as GameSuccess).selectedGame
+        : null;
+    emit(GameLoading());
 
     try {
       String finalImageUrl = event.game.imageUrl;
@@ -82,14 +76,10 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       );
 
       await gameRepository.addGame(gameToSave);
-      emit(state.copyWith(status: GameStateStatus.success));
+      final updatedGames = await gameRepository.fetchGames();
+      emit(GameSuccess(games: updatedGames, selectedGame: currentSelected));
     } catch (e) {
-      emit(
-        state.copyWith(
-          status: GameStateStatus.failure,
-          errorMessage: e.toString(),
-        ),
-      );
+      emit(GameFailure(e.toString()));
     }
   }
 
@@ -97,7 +87,10 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     UpdateGameRequested event,
     Emitter<GameState> emit,
   ) async {
-    emit(state.copyWith(status: GameStateStatus.loading));
+    final currentSelected = state is GameSuccess
+        ? (state as GameSuccess).selectedGame
+        : null;
+    emit(GameLoading());
     try {
       await gameRepository.updateGame(
         game: event.game,
@@ -106,21 +99,15 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       final updatedGames = await gameRepository.fetchGames();
 
       emit(
-        state.copyWith(
-          status: GameStateStatus.success,
+        GameSuccess(
           games: updatedGames,
-          selectedGame: state.selectedGame?.id == event.game.id
+          selectedGame: currentSelected?.id == event.game.id
               ? event.game
-              : state.selectedGame,
+              : currentSelected,
         ),
       );
     } catch (e) {
-      emit(
-        state.copyWith(
-          status: GameStateStatus.failure,
-          errorMessage: e.toString(),
-        ),
-      );
+      emit(GameFailure(e.toString()));
     }
   }
 }

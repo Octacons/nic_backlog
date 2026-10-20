@@ -92,45 +92,50 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 12),
               BlocConsumer<AuthBloc, AuthState>(
                 listener: (context, state) {
-                  if (state is AuthSuccess) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Login Berhasil!"),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (_) => const HomeScreen()),
-                      (route) => false,
-                    );
-                  } else if (state is AuthFailure) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(state.error),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
+                  switch (state) {
+                    case AuthInitial():
+                    case AuthLoading():
+                      break;
+                    case AuthSuccess():
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Login Berhasil!"),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => const HomeScreen()),
+                        (route) => false,
+                      );
+                    case AuthFailure(:final error):
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(error),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
                   }
                 },
                 builder: (context, state) {
-                  if (state is AuthLoading) {
-                    return const CircularProgressIndicator();
-                  }
-
-                  return ElevatedButton(
-                    onPressed: () {
-                      if (_loginFormKey.currentState!.validate()) {
-                        context.read<AuthBloc>().add(
-                          LoginRequested(
-                            input: _usernameOrEmailController.text,
-                            password: _passwordController.text,
-                          ),
-                        );
-                      }
-                    },
-                    child: const Text("LOGIN"),
-                  );
+                  return switch (state) {
+                    AuthLoading() => const CircularProgressIndicator(),
+                    AuthInitial() ||
+                    AuthSuccess() ||
+                    AuthFailure() => ElevatedButton(
+                      onPressed: () {
+                        if (_loginFormKey.currentState!.validate()) {
+                          context.read<AuthBloc>().add(
+                            LoginRequested(
+                              input: _usernameOrEmailController.text,
+                              password: _passwordController.text,
+                            ),
+                          );
+                        }
+                      },
+                      child: const Text("LOGIN"),
+                    ),
+                  };
                 },
               ),
             ],

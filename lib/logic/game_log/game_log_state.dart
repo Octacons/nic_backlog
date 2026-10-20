@@ -1,31 +1,31 @@
 import 'package:equatable/equatable.dart';
 import 'package:nic_backlog/data/models/game_log_model.dart';
 
-enum GameLogStatus { initial, loading, success, failure }
-
-class GameLogState extends Equatable {
-  final GameLogStatus status;
-  final List<GameLogModel> logs;
-  final String? errorMessage;
-
-  const GameLogState({
-    this.status = GameLogStatus.initial,
-    this.logs = const [],
-    this.errorMessage,
-  });
-
-  GameLogState copyWith({
-    GameLogStatus? status,
-    List<GameLogModel>? logs,
-    String? errorMessage,
-  }) {
-    return GameLogState(
-      status: status ?? this.status,
-      logs: logs ?? this.logs,
-      errorMessage: errorMessage,
-    );
-  }
+sealed class GameLogState extends Equatable {
+  const GameLogState();
 
   @override
-  List<Object?> get props => [status, logs, errorMessage];
+  List<Object?> get props => [];
+}
+
+class GameLogInitial extends GameLogState {}
+
+class GameLogLoading extends GameLogState {}
+
+class GameLogSuccess extends GameLogState {
+  final List<GameLogModel> logs;
+
+  const GameLogSuccess(this.logs);
+
+  @override
+  List<Object?> get props => [logs];
+}
+
+class GameLogFailure extends GameLogState {
+  final String errorMessage;
+
+  const GameLogFailure(this.errorMessage);
+
+  @override
+  List<Object?> get props => [errorMessage];
 }

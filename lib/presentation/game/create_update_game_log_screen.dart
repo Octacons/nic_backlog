@@ -101,26 +101,29 @@ class _CreateUpdateGameLogScreenState extends State<CreateUpdateGameLogScreen> {
       appBar: AppBar(title: Text(isEditing ? "Edit Jurnal" : "Tambah Jurnal")),
       body: BlocListener<GameLogBloc, GameLogState>(
         listener: (context, state) {
-          if (state.status == GameLogStatus.failure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.errorMessage ?? "Gagal menyimpan log"),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-          if (state.status == GameLogStatus.success) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  isEditing
-                      ? "Jurnal berhasil diperbarui"
-                      : "Jurnal berhasil ditambahkan",
+          switch (state) {
+            case GameLogInitial():
+            case GameLogLoading():
+              break;
+            case GameLogFailure(:final errorMessage):
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(errorMessage),
+                  backgroundColor: Colors.red,
                 ),
-                backgroundColor: Colors.green,
-              ),
-            );
-            Navigator.pop(context);
+              );
+            case GameLogSuccess():
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    isEditing
+                        ? "Jurnal berhasil diperbarui"
+                        : "Jurnal berhasil ditambahkan",
+                  ),
+                  backgroundColor: Colors.green,
+                ),
+              );
+              Navigator.pop(context);
           }
         },
         child: SingleChildScrollView(
@@ -195,7 +198,12 @@ class _CreateUpdateGameLogScreenState extends State<CreateUpdateGameLogScreen> {
                 const SizedBox(height: 24),
                 BlocBuilder<GameLogBloc, GameLogState>(
                   builder: (context, state) {
-                    final isLoading = state.status == GameLogStatus.loading;
+                    final isLoading = switch (state) {
+                      GameLogLoading() => true,
+                      GameLogInitial() ||
+                      GameLogSuccess() ||
+                      GameLogFailure() => false,
+                    };
 
                     return ElevatedButton(
                       style: ElevatedButton.styleFrom(

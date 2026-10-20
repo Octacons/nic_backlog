@@ -183,25 +183,32 @@ class _CreateUpdateGameScreenState extends State<CreateUpdateGameScreen> {
       appBar: AppBar(title: const Text("Add New Game")),
       body: BlocConsumer<GameBloc, GameState>(
         listener: (context, state) {
-          if (state.status == GameStateStatus.success) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text("Game berhasil ditambahkan!"),
-                backgroundColor: Colors.green,
-              ),
-            );
-            Navigator.pop(context);
-          } else if (state.status == GameStateStatus.failure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.errorMessage ?? "Gagal menambahkan game"),
-                backgroundColor: Colors.red,
-              ),
-            );
+          switch (state) {
+            case GameInitial():
+            case GameLoading():
+              break;
+            case GameSuccess():
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Game berhasil ditambahkan!"),
+                  backgroundColor: Colors.green,
+                ),
+              );
+              Navigator.pop(context);
+            case GameFailure(:final errorMessage):
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(errorMessage),
+                  backgroundColor: Colors.red,
+                ),
+              );
           }
         },
         builder: (context, state) {
-          final isLoading = state.status == GameStateStatus.loading;
+          final isLoading = switch (state) {
+            GameLoading() => true,
+            GameInitial() || GameSuccess() || GameFailure() => false,
+          };
 
           return Form(
             key: _formKey,

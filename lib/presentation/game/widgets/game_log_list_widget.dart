@@ -83,157 +83,165 @@ class GameLogListWidget extends StatelessWidget {
 
           BlocBuilder<GameLogBloc, GameLogState>(
             builder: (context, state) {
-              if (state.status == GameLogStatus.loading) {
-                return const Padding(
+              return switch (state) {
+                GameLogInitial() || GameLogLoading() => const Padding(
                   padding: EdgeInsets.symmetric(vertical: 24),
                   child: Center(child: CircularProgressIndicator()),
-                );
-              }
-
-              if (state.status == GameLogStatus.failure) {
-                return Padding(
+                ),
+                GameLogFailure(:final errorMessage) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Center(
                     child: Text(
-                      state.errorMessage ?? "Gagal memuat log permainan.",
+                      errorMessage,
                       style: const TextStyle(color: Colors.red),
                     ),
                   ),
-                );
-              }
-
-              final logs = state.logs;
-
-              if (logs.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Center(
-                    child: Text(
-                      "Belum ada log permainan.\n"
-                      "Klik tombol + untuk menambah jurnal baru!",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ),
-                );
-              }
-
-              return ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: logs.length,
-                itemBuilder: (context, index) {
-                  final log = logs[index];
-
-                  final dateStr =
-                      "${log.date.day.toString().padLeft(2, '0')}/"
-                      "${log.date.month.toString().padLeft(2, '0')}/"
-                      "${log.date.year}";
-
-                  return Dismissible(
-                    key: Key(log.id),
-                    direction: DismissDirection.endToStart,
-
-                    background: Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.redAccent,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Icon(Icons.delete_outline, color: Colors.white),
-                          SizedBox(width: 8),
-                          Text(
-                            "Hapus",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
+                ),
+                GameLogSuccess(:final logs) =>
+                  logs.isEmpty
+                      ? const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Center(
+                            child: Text(
+                              "Belum ada log permainan.\n"
+                              "Klik tombol + untuk menambah jurnal baru!",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: Colors.grey),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
+                        )
+                      : ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: logs.length,
+                          itemBuilder: (context, index) {
+                            final log = logs[index];
 
-                    confirmDismiss: (_) {
-                      return _confirmDelete(context, log.title);
-                    },
+                            final dateStr =
+                                "${log.date.day.toString().padLeft(2, '0')}/"
+                                "${log.date.month.toString().padLeft(2, '0')}/"
+                                "${log.date.year}";
 
-                    onDismissed: (_) {
-                      context.read<GameLogBloc>().add(
-                        DeleteGameLogRequested(gameId: gameId, logId: log.id),
-                      );
-                    },
+                            return Dismissible(
+                              key: Key(log.id),
+                              direction: DismissDirection.endToStart,
 
-                    child: Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: ListTile(
-                        onTap: () {
-                          _navigateToForm(context, gameLog: log);
-                        },
-
-                        title: Text(
-                          log.title,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Tanggal: $dateStr",
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[500],
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              log.note,
-                              maxLines: 4,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-
-                        trailing: log.rating != null
-                            ? Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
+                              background: Container(
+                                margin: const EdgeInsets.only(bottom: 8),
                                 decoration: BoxDecoration(
-                                  color: Colors.amber.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(6),
+                                  color: Colors.redAccent,
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
+                                alignment: Alignment.centerRight,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                ),
+                                child: const Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
-                                    const Icon(
-                                      Icons.star,
-                                      size: 14,
-                                      color: Colors.amber,
+                                    Icon(
+                                      Icons.delete_outline,
+                                      color: Colors.white,
                                     ),
-                                    const SizedBox(width: 4),
+                                    SizedBox(width: 8),
                                     Text(
-                                      log.rating!.toStringAsFixed(1),
-                                      style: const TextStyle(
+                                      "Hapus",
+                                      style: TextStyle(
+                                        color: Colors.white,
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.amber,
                                       ),
                                     ),
                                   ],
                                 ),
-                              )
-                            : null,
-                      ),
-                    ),
-                  );
-                },
-              );
+                              ),
+
+                              confirmDismiss: (_) {
+                                return _confirmDelete(context, log.title);
+                              },
+
+                              onDismissed: (_) {
+                                context.read<GameLogBloc>().add(
+                                  DeleteGameLogRequested(
+                                    gameId: gameId,
+                                    logId: log.id,
+                                  ),
+                                );
+                              },
+
+                              child: Card(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                child: ListTile(
+                                  onTap: () {
+                                    _navigateToForm(context, gameLog: log);
+                                  },
+
+                                  title: Text(
+                                    log.title,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+
+                                  subtitle: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Tanggal: $dateStr",
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[500],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        log.note,
+                                        maxLines: 4,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+
+                                  trailing: log.rating != null
+                                      ? Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.amber.withValues(
+                                              alpha: 0.2,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              6,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(
+                                                Icons.star,
+                                                size: 14,
+                                                color: Colors.amber,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                log.rating!.toStringAsFixed(1),
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.amber,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        )
+                                      : null,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+              };
             },
           ),
         ],

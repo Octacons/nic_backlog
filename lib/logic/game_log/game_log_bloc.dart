@@ -9,7 +9,7 @@ class GameLogBloc extends Bloc<GameLogEvent, GameLogState> {
 
   GameLogBloc({required GameLogRepository gameLogRepository})
     : _gameLogRepository = gameLogRepository,
-      super(const GameLogState()) {
+      super(GameLogInitial()) {
     on<FetchGameLogsRequested>(_onFetchGameLogsRequested);
     on<AddGameLogRequested>(_onAddGameLogRequested);
     on<DeleteGameLogRequested>(_onDeleteGameLogRequested);
@@ -19,22 +19,17 @@ class GameLogBloc extends Bloc<GameLogEvent, GameLogState> {
     FetchGameLogsRequested event,
     Emitter<GameLogState> emit,
   ) async {
-    emit(state.copyWith(status: GameLogStatus.loading));
+    emit(GameLogLoading());
     try {
       AppLogger.debug(
         'Fetching logs untuk game: ${event.gameId}',
         name: 'GameLogBloc',
       );
       final logs = await _gameLogRepository.fetchGameLogs(event.gameId);
-      emit(state.copyWith(status: GameLogStatus.success, logs: logs));
+      emit(GameLogSuccess(logs));
     } catch (e) {
       AppLogger.error('Gagal fetch logs: $e', name: 'GameLogBloc', error: e);
-      emit(
-        state.copyWith(
-          status: GameLogStatus.failure,
-          errorMessage: e.toString(),
-        ),
-      );
+      emit(GameLogFailure(e.toString()));
     }
   }
 
@@ -42,7 +37,7 @@ class GameLogBloc extends Bloc<GameLogEvent, GameLogState> {
     AddGameLogRequested event,
     Emitter<GameLogState> emit,
   ) async {
-    emit(state.copyWith(status: GameLogStatus.loading));
+    emit(GameLogLoading());
     try {
       AppLogger.debug(
         'Menambahkan log ke game: ${event.gameId}',
@@ -51,15 +46,10 @@ class GameLogBloc extends Bloc<GameLogEvent, GameLogState> {
       await _gameLogRepository.addGameLog(event.gameId, event.log);
 
       final updatedLogs = await _gameLogRepository.fetchGameLogs(event.gameId);
-      emit(state.copyWith(status: GameLogStatus.success, logs: updatedLogs));
+      emit(GameLogSuccess(updatedLogs));
     } catch (e) {
       AppLogger.error('Gagal add log: $e', name: 'GameLogBloc', error: e);
-      emit(
-        state.copyWith(
-          status: GameLogStatus.failure,
-          errorMessage: e.toString(),
-        ),
-      );
+      emit(GameLogFailure(e.toString()));
     }
   }
 
@@ -67,7 +57,7 @@ class GameLogBloc extends Bloc<GameLogEvent, GameLogState> {
     DeleteGameLogRequested event,
     Emitter<GameLogState> emit,
   ) async {
-    emit(state.copyWith(status: GameLogStatus.loading));
+    emit(GameLogLoading());
     try {
       AppLogger.debug(
         'Menghapus log ${event.logId} dari game: ${event.gameId}',
@@ -76,15 +66,10 @@ class GameLogBloc extends Bloc<GameLogEvent, GameLogState> {
       await _gameLogRepository.deleteGameLog(event.gameId, event.logId);
 
       final updatedLogs = await _gameLogRepository.fetchGameLogs(event.gameId);
-      emit(state.copyWith(status: GameLogStatus.success, logs: updatedLogs));
+      emit(GameLogSuccess(updatedLogs));
     } catch (e) {
       AppLogger.error('Gagal delete log: $e', name: 'GameLogBloc', error: e);
-      emit(
-        state.copyWith(
-          status: GameLogStatus.failure,
-          errorMessage: e.toString(),
-        ),
-      );
+      emit(GameLogFailure(e.toString()));
     }
   }
 }

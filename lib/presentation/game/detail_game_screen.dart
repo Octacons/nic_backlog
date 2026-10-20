@@ -41,30 +41,36 @@ class _GameDetailScreenState extends State<GameDetailScreen> {
 
       child: BlocConsumer<GameBloc, GameState>(
         listener: (context, state) {
-          if (state.status == GameStateStatus.failure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.errorMessage ?? "Terjadi kesalahan"),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
+          switch (state) {
+            case GameInitial():
+            case GameLoading():
+              break;
+            case GameFailure(:final errorMessage):
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(errorMessage),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            case GameSuccess(:final selectedGame):
+              if (selectedGame == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Game berhasil dihapus"),
+                    backgroundColor: Colors.green,
+                  ),
+                );
 
-          if (state.status == GameStateStatus.success &&
-              state.selectedGame == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text("Game berhasil dihapus"),
-                backgroundColor: Colors.green,
-              ),
-            );
-
-            Navigator.pop(context);
+                Navigator.pop(context);
+              }
           }
         },
 
         builder: (context, state) {
-          final game = state.selectedGame;
+          final game = switch (state) {
+            GameSuccess(:final selectedGame) => selectedGame,
+            GameInitial() || GameLoading() || GameFailure() => null,
+          };
 
           return Scaffold(
             appBar: AppBar(
@@ -117,26 +123,30 @@ class _GameDetailScreenState extends State<GameDetailScreen> {
   }
 
   Widget _buildBody(GameState state) {
-    if (state.status == GameStateStatus.loading && state.selectedGame == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    final game = state.selectedGame;
-
-    if (game == null) {
-      return const Center(child: Text("Detail game tidak ditemukan."));
-    }
-
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          GameDetailBody(game: game),
-          const SizedBox(height: 8),
-          GameLogListWidget(gameId: widget.gameId),
-          const SizedBox(height: 8),
-        ],
+    return switch (state) {
+      GameInitial() || GameLoading() => const Center(
+        child: CircularProgressIndicator(),
       ),
-    );
+      GameFailure(:final errorMessage) => Center(
+        child: Text(
+          errorMessage,
+          style: const TextStyle(color: Colors.red),
+        ),
+      ),
+      GameSuccess(:final selectedGame) =>
+        selectedGame == null
+            ? const Center(child: Text("Detail game tidak ditemukan."))
+            : SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    GameDetailBody(game: selectedGame),
+                    const SizedBox(height: 8),
+                    GameLogListWidget(gameId: widget.gameId),
+                    const SizedBox(height: 8),
+                  ],
+                ),
+              ),
+    };
   }
 }
