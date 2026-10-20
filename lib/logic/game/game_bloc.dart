@@ -7,30 +7,29 @@ import 'package:nic_backlog/logic/game/game_state.dart';
 class GameBloc extends Bloc<GameEvent, GameState> {
   final GameRepository gameRepository;
 
-  GameBloc({required this.gameRepository}) : super(const GameState()) {
+  GameBloc({required this.gameRepository}) : super(GameInitial()) {
     on<FetchGamesRequested>(_onFetchGamesRequested);
     on<FetchGameDetailRequested>(_onFetchGameDetailRequested);
     on<AddGameRequested>(_onAddGameRequested);
-    on<AddGameLogRequested>(_onAddGameLogRequested);
+    on<UpdateGameRequested>(_onUpdateGameRequested);
+    on<DeleteGameRequested>(_onDeleteGameRequested);
   }
 
   Future<void> _onFetchGamesRequested(
     FetchGamesRequested event,
     Emitter<GameState> emit,
   ) async {
-    emit(state.copyWith(status: GameStateStatus.loading));
+    final currentSelected = state is GameSuccess
+        ? (state as GameSuccess).selectedGame
+        : null;
+    emit(GameLoading());
 
     try {
       final games = await gameRepository.fetchGames();
-      emit(state.copyWith(status: GameStateStatus.success, games: games));
+      emit(GameSuccess(games: games, selectedGame: currentSelected));
     } catch (e) {
       final cleanError = e.toString().replaceAll('Exception: ', '');
-      emit(
-        state.copyWith(
-          status: GameStateStatus.failure,
-          errorMessage: cleanError,
-        ),
-      );
+      emit(GameFailure(cleanError));
     }
   }
 
@@ -38,23 +37,16 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     FetchGameDetailRequested event,
     Emitter<GameState> emit,
   ) async {
-    emit(state.copyWith(status: GameStateStatus.loading));
+    final currentGames = state is GameSuccess
+        ? (state as GameSuccess).games
+        : const <GameModel>[];
+    emit(GameLoading());
     try {
       final gameDetail = await gameRepository.fetchGameById(event.gameId);
-      emit(
-        state.copyWith(
-          status: GameStateStatus.success,
-          selectedGame: gameDetail,
-        ),
-      );
+      emit(GameSuccess(games: currentGames, selectedGame: gameDetail));
     } catch (e) {
       final cleanError = e.toString().replaceAll('Exception: ', '');
-      emit(
-        state.copyWith(
-          status: GameStateStatus.failure,
-          errorMessage: cleanError,
-        ),
-      );
+      emit(GameFailure(cleanError));
     }
   }
 
@@ -62,7 +54,10 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     AddGameRequested event,
     Emitter<GameState> emit,
   ) async {
-    emit(state.copyWith(status: GameStateStatus.loading));
+    final currentSelected = state is GameSuccess
+        ? (state as GameSuccess).selectedGame
+        : null;
+    emit(GameLoading());
 
     try {
       String finalImageUrl = event.game.imageUrl;
@@ -82,27 +77,53 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       );
 
       await gameRepository.addGame(gameToSave);
-      emit(state.copyWith(status: GameStateStatus.success));
+      final updatedGames = await gameRepository.fetchGames();
+      emit(GameSuccess(games: updatedGames, selectedGame: currentSelected));
     } catch (e) {
-      emit(
-        state.copyWith(
-          status: GameStateStatus.failure,
-          errorMessage: e.toString(),
-        ),
-      );
+      emit(GameFailure(e.toString()));
     }
   }
 
-  Future<void> _onAddGameLogRequested(
-    AddGameLogRequested event,
+  Future<void> _onUpdateGameRequested(
+    UpdateGameRequested event,
     Emitter<GameState> emit,
   ) async {
+    final currentSelected = state is GameSuccess
+        ? (state as GameSuccess).selectedGame
+        : null;
+    emit(GameLoading());
     try {
-      await gameRepository.addGameLog(event.gameId, event.log);
-      add(FetchGameDetailRequested(gameId: event.gameId));
+      final updatedGame = await gameRepository.updateGame(
+        game: event.game,
+        imageFile: event.imageFile,
+      );
+      final updatedGames = await gameRepository.fetchGames();
+
+      emit(
+        GameSuccess(
+          games: updatedGames,
+          selectedGame: currentSelected?.id == event.game.id
+              ? updatedGame
+              : currentSelected,
+        ),
+      );
+    } catch (e) {
+      emit(GameFailure(e.toString()));
+    }
+  }
+
+  Future<void> _onDeleteGameRequested(
+    DeleteGameRequested event,
+    Emitter<GameState> emit,
+  ) async {
+    emit(GameLoading());
+    try {
+      await gameRepository.deleteGame(event.gameId);
+      final updatedGames = await gameRepository.fetchGames();
+      emit(GameSuccess(games: updatedGames, selectedGame: null));
     } catch (e) {
       final cleanError = e.toString().replaceAll('Exception: ', '');
-      emit(state.copyWith(errorMessage: cleanError));
+      emit(GameFailure(cleanError));
     }
   }
 }

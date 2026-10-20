@@ -8,8 +8,9 @@ import 'package:nic_backlog/logic/game/game_bloc.dart';
 import 'package:nic_backlog/logic/game/game_event.dart';
 import 'package:nic_backlog/logic/game/game_state.dart';
 import 'package:nic_backlog/presentation/auth/login_screen.dart';
-import 'package:nic_backlog/presentation/game/add_game_screen.dart';
+import 'package:nic_backlog/presentation/game/create_update_game_screen.dart';
 import 'package:nic_backlog/presentation/game/detail_game_screen.dart';
+import 'package:nic_backlog/utils/app_theme.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -37,16 +38,23 @@ class _HomeScreenState extends State<HomeScreen> {
         imageUrl,
         fit: BoxFit.cover,
         width: double.infinity,
-        errorBuilder: (context, error, stackTrace) => const Center(
-          child: Icon(Icons.broken_image, size: 40, color: Colors.grey),
+        errorBuilder: (context, error, stackTrace) => Container(
+          color: AppColors.surface,
+          child: const Center(
+            child: Icon(
+              Icons.broken_image_outlined,
+              size: 40,
+              color: AppColors.textSecondary,
+            ),
+          ),
         ),
       );
     }
 
     return Container(
-      color: Colors.grey[800],
+      color: AppColors.primary,
       child: const Center(
-        child: Icon(Icons.gamepad, size: 40, color: Colors.white54),
+        child: Icon(Icons.gamepad, size: 40, color: AppColors.tertiary),
       ),
     );
   }
@@ -55,191 +63,295 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        if (state is AuthInitial) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-            (route) => false,
-          );
-        } else if (state is AuthFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.error), backgroundColor: Colors.red),
-          );
+        switch (state) {
+          case AuthInitial():
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginScreen()),
+              (route) => false,
+            );
+          case AuthFailure(:final error):
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(error),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          case AuthLoading():
+          case AuthSuccess():
+            break;
         }
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text("Nic-BackLog")),
+        appBar: AppBar(
+          title: const Text("NIC-BACKLOG"),
+        ),
         drawer: Drawer(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const DrawerHeader(
-                decoration: BoxDecoration(color: Colors.redAccent),
-                child: Center(
-                  child: Text(
-                    'Nic_BackLog',
-                    style: TextStyle(color: Colors.white, fontSize: 20),
+              Container(
+                padding: const EdgeInsets.fromLTRB(24, 64, 24, 24),
+                decoration: const BoxDecoration(
+                  color: AppColors.primary,
+                  border: Border(
+                    bottom: BorderSide(color: AppColors.secondary, width: 4),
                   ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'GAMING ARCHIVE',
+                      style: AppTextStyles.overline.copyWith(
+                        color: AppColors.secondary,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'NIC-BACKLOG',
+                      style: AppTextStyles.subhead.copyWith(
+                        color: AppColors.tertiary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const Spacer(),
               SafeArea(
-                child: ListTile(
-                  leading: const Icon(Icons.logout, color: Colors.red),
-                  title: const Text(
-                    'Log Out',
-                    style: TextStyle(color: Colors.red),
+                top: false,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      top: BorderSide(color: AppColors.borderStrong, width: 2),
+                    ),
                   ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    context.read<AuthBloc>().add(LogoutRequested());
-                  },
+                  child: ListTile(
+                    leading: const Icon(
+                      Icons.logout,
+                      color: AppColors.secondary,
+                      size: 20,
+                    ),
+                    title: Text(
+                      'LOG OUT',
+                      style: AppTextStyles.button.copyWith(
+                        color: AppColors.secondary,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.read<AuthBloc>().add(LogoutRequested());
+                    },
+                  ),
                 ),
               ),
             ],
           ),
         ),
         body: RefreshIndicator(
+          color: AppColors.primary,
+          backgroundColor: AppColors.background,
           onRefresh: () async {
             context.read<GameBloc>().add(const FetchGamesRequested());
           },
           child: BlocBuilder<GameBloc, GameState>(
             builder: (context, state) {
-              if (state.status == GameStateStatus.loading) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              if (state.status == GameStateStatus.failure) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        state.errorMessage ?? "Gagal memuat data",
-                        style: const TextStyle(color: Colors.red),
-                      ),
-                      const SizedBox(height: 12),
-                      ElevatedButton(
-                        onPressed: () {
-                          context.read<GameBloc>().add(
-                            const FetchGamesRequested(),
-                          );
-                        },
-                        child: const Text("Coba Lagi"),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              if (state.games.isEmpty) {
-                return const Center(
-                  child: Text(
-                    "Belum ada game di backlog kamu.\nKlik menu 'Add Game List' untuk menambahkan!",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey, fontSize: 16),
-                  ),
-                );
-              }
-
-              return ListView.builder(
-                padding: const EdgeInsets.all(12),
-                itemCount: state.games.length,
-                itemBuilder: (context, index) {
-                  final game = state.games[index];
-
-                  return InkWell(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              GameDetailScreen(gameId: game.id),
-                        ),
-                      );
-                    },
-                    child: Card(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      clipBehavior: Clip.antiAlias,
-                      elevation: 4,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Render Cover Game dengan Rasio 16:9
-                          AspectRatio(
-                            aspectRatio: 16 / 9,
-                            child: _buildGameCover(game.imageUrl),
+              return switch (state) {
+                GameInitial() || GameLoading() => const Center(
+                  child: CircularProgressIndicator(),
+                ),
+                GameFailure(:final errorMessage) => Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          errorMessage,
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.body.copyWith(
+                            color: AppColors.error,
+                            fontWeight: FontWeight.w700,
                           ),
-                          Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        game.title,
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.redAccent.withValues(
-                                          alpha: 0.2,
-                                        ),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Text(
-                                        game.status.name.toUpperCase(),
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.redAccent,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () {
+                            context.read<GameBloc>().add(
+                              const FetchGamesRequested(),
+                            );
+                          },
+                          child: const Text("COBA LAGI"),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                GameSuccess(:final games) =>
+                  games.isEmpty
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(32.0),
+                            child: Container(
+                              padding: const EdgeInsets.all(24.0),
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                border: Border.all(
+                                  color: AppColors.borderStrong,
+                                  width: 2,
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  game.genre,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[600],
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text(
+                                    "EMPTY ARCHIVE",
+                                    style: AppTextStyles.overline,
                                   ),
-                                ),
-                                if (game.description.isNotEmpty) ...[
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                    "NO GAMES YET",
+                                    style: AppTextStyles.subhead,
+                                  ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    game.description,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontSize: 14),
+                                    "Belum ada game di backlog kamu.\nKlik tombol '+ ADD GAME' untuk menambahkan!",
+                                    textAlign: TextAlign.center,
+                                    style: AppTextStyles.bodySmall,
                                   ),
                                 ],
-                              ],
+                              ),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              );
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+                          itemCount: games.length,
+                          itemBuilder: (context, index) {
+                            final game = games[index];
+
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 16),
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          GameDetailScreen(gameId: game.id),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.background,
+                                    border: Border(
+                                      top: BorderSide(
+                                        color: AppColors.borderStrong,
+                                        width: 2,
+                                      ),
+                                      left: BorderSide(
+                                        color: AppColors.borderStrong,
+                                        width: 2,
+                                      ),
+                                      right: BorderSide(
+                                        color: AppColors.borderStrong,
+                                        width: 2,
+                                      ),
+                                      bottom: BorderSide(
+                                        color: AppColors.borderStrong,
+                                        width: 2,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      // Render Cover Game dengan Rasio 16:9
+                                      Container(
+                                        decoration: const BoxDecoration(
+                                          border: Border(
+                                            bottom: BorderSide(
+                                              color: AppColors.borderStrong,
+                                              width: 2,
+                                            ),
+                                          ),
+                                        ),
+                                        child: AspectRatio(
+                                          aspectRatio: 16 / 9,
+                                          child: _buildGameCover(game.imageUrl),
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.all(16),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        game.genre
+                                                            .toUpperCase(),
+                                                        style: AppTextStyles
+                                                            .overline
+                                                            .copyWith(
+                                                              color: AppColors
+                                                                  .textSecondary,
+                                                            ),
+                                                      ),
+                                                      const SizedBox(height: 4),
+                                                      Text(
+                                                        game.title,
+                                                        style: AppTextStyles
+                                                            .subhead,
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 12),
+                                                AppTheme.buildStatusChip(
+                                                  game.status,
+                                                ),
+                                              ],
+                                            ),
+                                            if (game
+                                                .description
+                                                .isNotEmpty) ...[
+                                              const SizedBox(height: 12),
+                                              Text(
+                                                game.description,
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: AppTextStyles.bodySmall,
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+              };
             },
           ),
         ),
@@ -247,15 +359,13 @@ class _HomeScreenState extends State<HomeScreen> {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const AddGameScreen()),
+              MaterialPageRoute(
+                builder: (context) => const CreateUpdateGameScreen(),
+              ),
             );
           },
-          backgroundColor: Colors.redAccent,
-          icon: const Icon(Icons.add, color: Colors.white),
-          label: const Text(
-            "Add Game",
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
+          icon: const Icon(Icons.add, color: AppColors.tertiary, size: 18),
+          label: const Text("ADD GAME"),
         ),
       ),
     );
