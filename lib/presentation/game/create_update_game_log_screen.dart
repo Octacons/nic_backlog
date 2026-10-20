@@ -82,12 +82,44 @@ class _CreateUpdateGameLogScreenState extends State<CreateUpdateGameLogScreen> {
     );
 
     if (isEditing) {
-      // context.read<GameLogBloc>().add(
-      //   UpdateGameLogRequested(gameId: widget.gameId, log: logData),
-      // );
+      context.read<GameLogBloc>().add(
+        UpdateGameLogRequested(gameId: widget.gameId, log: logData),
+      );
     } else {
       context.read<GameLogBloc>().add(
         AddGameLogRequested(gameId: widget.gameId, log: logData),
+      );
+    }
+  }
+
+  Future<void> _confirmDelete() async {
+    final log = widget.gameLog;
+    if (log == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text("Hapus Log"),
+          content: Text('Apakah Anda yakin ingin menghapus log "${log.title}"?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text("Batal"),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text("Hapus"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true && mounted) {
+      context.read<GameLogBloc>().add(
+        DeleteGameLogRequested(gameId: widget.gameId, logId: log.id),
       );
     }
   }
@@ -98,7 +130,17 @@ class _CreateUpdateGameLogScreenState extends State<CreateUpdateGameLogScreen> {
         "${_selectedDate.day.toString().padLeft(2, '0')}/${_selectedDate.month.toString().padLeft(2, '0')}/${_selectedDate.year}";
 
     return Scaffold(
-      appBar: AppBar(title: Text(isEditing ? "Edit Jurnal" : "Tambah Jurnal")),
+      appBar: AppBar(
+        title: Text(isEditing ? "Edit Jurnal" : "Tambah Jurnal"),
+        actions: [
+          if (isEditing)
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+              tooltip: "Hapus Log",
+              onPressed: _confirmDelete,
+            ),
+        ],
+      ),
       body: BlocListener<GameLogBloc, GameLogState>(
         listener: (context, state) {
           switch (state) {

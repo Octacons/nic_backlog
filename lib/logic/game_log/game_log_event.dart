@@ -27,6 +27,16 @@ class AddGameLogRequested extends GameLogEvent {
   List<Object?> get props => [gameId, log];
 }
 
+class UpdateGameLogRequested extends GameLogEvent {
+  final String gameId;
+  final GameLogModel log;
+
+  const UpdateGameLogRequested({required this.gameId, required this.log});
+
+  @override
+  List<Object?> get props => [gameId, log];
+}
+
 class DeleteGameLogRequested extends GameLogEvent {
   final String gameId;
   final String logId;

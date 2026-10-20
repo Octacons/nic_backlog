@@ -86,6 +86,29 @@ class GameLogRepository {
     }
   }
 
+  Future<void> updateGameLog(String gameId, GameLogModel log) async {
+    const logTag = 'GameLogRepository.updateGameLog';
+    try {
+      final payload = log.toMap();
+      AppLogger.request(
+        'Mengupdate log [${log.id}] pada game [$gameId]:\nPayload: $payload',
+        name: logTag,
+      );
+
+      await _logsCollection(gameId).doc(log.id).update(payload);
+
+      AppLogger.response('Sukses mengupdate log [${log.id}]', name: logTag);
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Gagal mengupdate log [${log.id}] pada game [$gameId]: $e',
+        name: logTag,
+        error: e,
+        stackTrace: stackTrace,
+      );
+      throw Exception("Gagal mengupdate log: ${e.toString()}");
+    }
+  }
+
   Future<void> deleteGameLog(String gameId, String logId) async {
     const logTag = 'GameLogRepository.deleteGameLog';
     try {

@@ -12,6 +12,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     on<FetchGameDetailRequested>(_onFetchGameDetailRequested);
     on<AddGameRequested>(_onAddGameRequested);
     on<UpdateGameRequested>(_onUpdateGameRequested);
+    on<DeleteGameRequested>(_onDeleteGameRequested);
   }
 
   Future<void> _onFetchGamesRequested(
@@ -92,7 +93,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         : null;
     emit(GameLoading());
     try {
-      await gameRepository.updateGame(
+      final updatedGame = await gameRepository.updateGame(
         game: event.game,
         imageFile: event.imageFile,
       );
@@ -102,12 +103,27 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         GameSuccess(
           games: updatedGames,
           selectedGame: currentSelected?.id == event.game.id
-              ? event.game
+              ? updatedGame
               : currentSelected,
         ),
       );
     } catch (e) {
       emit(GameFailure(e.toString()));
+    }
+  }
+
+  Future<void> _onDeleteGameRequested(
+    DeleteGameRequested event,
+    Emitter<GameState> emit,
+  ) async {
+    emit(GameLoading());
+    try {
+      await gameRepository.deleteGame(event.gameId);
+      final updatedGames = await gameRepository.fetchGames();
+      emit(GameSuccess(games: updatedGames, selectedGame: null));
+    } catch (e) {
+      final cleanError = e.toString().replaceAll('Exception: ', '');
+      emit(GameFailure(cleanError));
     }
   }
 }

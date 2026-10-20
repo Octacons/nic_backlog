@@ -162,7 +162,10 @@ class GameRepository {
     }
   }
 
-  Future<void> updateGame({required GameModel game, File? imageFile}) async {
+  Future<GameModel> updateGame({
+    required GameModel game,
+    File? imageFile,
+  }) async {
     const tag = 'GameRepository.updateGame';
     try {
       String finalImageUrl = game.imageUrl;
@@ -191,6 +194,7 @@ class GameRepository {
           .update(payload);
 
       AppLogger.response('Game [${game.id}] berhasil diupdate', name: tag);
+      return updatedGame;
     } catch (e, stackTrace) {
       AppLogger.error(
         'Gagal mengupdate game [${game.id}]: $e',
@@ -199,6 +203,40 @@ class GameRepository {
         stackTrace: stackTrace,
       );
       throw Exception("Gagal mengupdate game: ${e.toString()}");
+    }
+  }
+
+  Future<void> deleteGame(String gameId) async {
+    const tag = 'GameRepository.deleteGame';
+    try {
+      AppLogger.request(
+        'Menghapus game [$gameId] untuk User [$_currentUserId]',
+        name: tag,
+      );
+
+      final gameDocRef = _firestore
+          .collection('users')
+          .doc(_currentUserId)
+          .collection('games')
+          .doc(gameId);
+
+      final logsSnapshot = await gameDocRef.collection('logs').get();
+      final batch = _firestore.batch();
+      for (final doc in logsSnapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      batch.delete(gameDocRef);
+      await batch.commit();
+
+      AppLogger.response('Game [$gameId] berhasil dihapus', name: tag);
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Gagal menghapus game [$gameId]: $e',
+        name: tag,
+        error: e,
+        stackTrace: stackTrace,
+      );
+      throw Exception("Gagal menghapus game: ${e.toString()}");
     }
   }
 }

@@ -110,7 +110,7 @@ class _CreateUpdateGameScreenState extends State<CreateUpdateGameScreen> {
   Future<void> _pickReleaseDate(BuildContext context) async {
     final pickedDate = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: _selectedReleaseDate ?? DateTime.now(),
       firstDate: DateTime(1970),
       lastDate: DateTime(2030),
     );
@@ -180,7 +180,7 @@ class _CreateUpdateGameScreenState extends State<CreateUpdateGameScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Add New Game")),
+      appBar: AppBar(title: Text(_isEditMode ? "Edit Game" : "Add New Game")),
       body: BlocConsumer<GameBloc, GameState>(
         listener: (context, state) {
           switch (state) {
@@ -189,8 +189,12 @@ class _CreateUpdateGameScreenState extends State<CreateUpdateGameScreen> {
               break;
             case GameSuccess():
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text("Game berhasil ditambahkan!"),
+                SnackBar(
+                  content: Text(
+                    _isEditMode
+                        ? "Game berhasil diperbarui!"
+                        : "Game berhasil ditambahkan!",
+                  ),
                   backgroundColor: Colors.green,
                 ),
               );
@@ -343,9 +347,11 @@ class _CreateUpdateGameScreenState extends State<CreateUpdateGameScreen> {
                       onPressed: isLoading ? null : _submitForm,
                       child: isLoading
                           ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text(
-                              "SAVE GAME",
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                          : Text(
+                              _isEditMode ? "UPDATE GAME" : "SAVE GAME",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                     ),
                   ),

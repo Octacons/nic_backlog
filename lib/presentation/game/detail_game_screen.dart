@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:nic_backlog/data/models/game_model.dart';
 import 'package:nic_backlog/data/repositories/game_log_repository.dart';
 import 'package:nic_backlog/logic/game/game_bloc.dart';
 import 'package:nic_backlog/logic/game/game_event.dart';
@@ -29,6 +30,38 @@ class _GameDetailScreenState extends State<GameDetailScreen> {
     context.read<GameBloc>().add(
       FetchGameDetailRequested(gameId: widget.gameId),
     );
+  }
+
+  Future<void> _confirmDeleteGame(
+    BuildContext context,
+    GameModel game,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text("Hapus Game"),
+          content: Text(
+            'Apakah Anda yakin ingin menghapus "${game.title}" beserta seluruh jurnal permainannya?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text("Batal"),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text("Hapus"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true && context.mounted) {
+      context.read<GameBloc>().add(DeleteGameRequested(gameId: game.id));
+    }
   }
 
   @override
@@ -87,7 +120,9 @@ class _GameDetailScreenState extends State<GameDetailScreen> {
                             builder: (_) => CreateUpdateGameScreen(game: game),
                           ),
                         );
-                      } else if (value == 'delete') {}
+                      } else if (value == 'delete') {
+                        _confirmDeleteGame(context, game);
+                      }
                     },
                     itemBuilder: (_) => const [
                       PopupMenuItem(
@@ -104,9 +139,9 @@ class _GameDetailScreenState extends State<GameDetailScreen> {
                         value: 'delete',
                         child: Row(
                           children: [
-                            Icon(Icons.delete, size: 20),
+                            Icon(Icons.delete, size: 20, color: Colors.red),
                             SizedBox(width: 8),
-                            Text('Delete'),
+                            Text('Delete', style: TextStyle(color: Colors.red)),
                           ],
                         ),
                       ),

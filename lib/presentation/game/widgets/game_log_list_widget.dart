@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:nic_backlog/data/models/game_log_model.dart';
 import 'package:nic_backlog/logic/game_log/game_log_bloc.dart';
 import 'package:nic_backlog/logic/game_log/game_log_event.dart';
 import 'package:nic_backlog/logic/game_log/game_log_state.dart';
@@ -11,7 +12,7 @@ class GameLogListWidget extends StatelessWidget {
 
   const GameLogListWidget({super.key, required this.gameId});
 
-  void _navigateToForm(BuildContext context, {dynamic gameLog}) {
+  void _navigateToForm(BuildContext context, {GameLogModel? gameLog}) {
     final gameLogBloc = context.read<GameLogBloc>();
 
     Navigator.push(
@@ -21,8 +22,7 @@ class GameLogListWidget extends StatelessWidget {
           value: gameLogBloc,
           child: CreateUpdateGameLogScreen(
             gameId: gameId,
-            // Tambahkan parameter gameLog untuk mode edit
-            // jika sudah tersedia di screen kamu.
+            gameLog: gameLog,
           ),
         ),
       ),

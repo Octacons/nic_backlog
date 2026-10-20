@@ -12,6 +12,7 @@ class GameLogBloc extends Bloc<GameLogEvent, GameLogState> {
       super(GameLogInitial()) {
     on<FetchGameLogsRequested>(_onFetchGameLogsRequested);
     on<AddGameLogRequested>(_onAddGameLogRequested);
+    on<UpdateGameLogRequested>(_onUpdateGameLogRequested);
     on<DeleteGameLogRequested>(_onDeleteGameLogRequested);
   }
 
@@ -49,6 +50,26 @@ class GameLogBloc extends Bloc<GameLogEvent, GameLogState> {
       emit(GameLogSuccess(updatedLogs));
     } catch (e) {
       AppLogger.error('Gagal add log: $e', name: 'GameLogBloc', error: e);
+      emit(GameLogFailure(e.toString()));
+    }
+  }
+
+  Future<void> _onUpdateGameLogRequested(
+    UpdateGameLogRequested event,
+    Emitter<GameLogState> emit,
+  ) async {
+    emit(GameLogLoading());
+    try {
+      AppLogger.debug(
+        'Mengupdate log ${event.log.id} pada game: ${event.gameId}',
+        name: 'GameLogBloc',
+      );
+      await _gameLogRepository.updateGameLog(event.gameId, event.log);
+
+      final updatedLogs = await _gameLogRepository.fetchGameLogs(event.gameId);
+      emit(GameLogSuccess(updatedLogs));
+    } catch (e) {
+      AppLogger.error('Gagal update log: $e', name: 'GameLogBloc', error: e);
       emit(GameLogFailure(e.toString()));
     }
   }

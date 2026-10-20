@@ -40,3 +40,12 @@ class UpdateGameRequested extends GameEvent {
   @override
   List<Object?> get props => [game, imageFile];
 }
+
+class DeleteGameRequested extends GameEvent {
+  final String gameId;
+
+  const DeleteGameRequested({required this.gameId});
+
+  @override
+  List<Object?> get props => [gameId];
+}
