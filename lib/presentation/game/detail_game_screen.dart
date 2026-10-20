@@ -9,6 +9,7 @@ import 'package:nic_backlog/logic/game/game_state.dart';
 import 'package:nic_backlog/logic/game_log/game_log_bloc.dart';
 import 'package:nic_backlog/logic/game_log/game_log_event.dart';
 import 'package:nic_backlog/presentation/game/create_update_game_screen.dart';
+import 'package:nic_backlog/utils/app_theme.dart';
 
 import 'widgets/game_detail_body.dart';
 import 'widgets/game_log_list_widget.dart';
@@ -40,19 +41,22 @@ class _GameDetailScreenState extends State<GameDetailScreen> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text("Hapus Game"),
+          title: const Text("HAPUS GAME"),
           content: Text(
             'Apakah Anda yakin ingin menghapus "${game.title}" beserta seluruh jurnal permainannya?',
           ),
           actions: [
-            TextButton(
+            OutlinedButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text("Batal"),
+              child: const Text("BATAL"),
             ),
-            TextButton(
-              style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error,
+                side: const BorderSide(color: AppColors.error, width: 2),
+              ),
               onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text("Hapus"),
+              child: const Text("HAPUS"),
             ),
           ],
         );
@@ -82,15 +86,15 @@ class _GameDetailScreenState extends State<GameDetailScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(errorMessage),
-                  backgroundColor: Colors.red,
+                  backgroundColor: AppColors.error,
                 ),
               );
             case GameSuccess(:final selectedGame):
               if (selectedGame == null) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text("Game berhasil dihapus"),
-                    backgroundColor: Colors.green,
+                    content: Text("GAME BERHASIL DIHAPUS"),
+                    backgroundColor: AppColors.success,
                   ),
                 );
 
@@ -107,7 +111,7 @@ class _GameDetailScreenState extends State<GameDetailScreen> {
 
           return Scaffold(
             appBar: AppBar(
-              title: const Text("Game Detail"),
+              title: const Text("GAME DETAIL"),
               actions: [
                 if (game != null)
                   PopupMenuButton<String>(
@@ -129,9 +133,13 @@ class _GameDetailScreenState extends State<GameDetailScreen> {
                         value: 'edit',
                         child: Row(
                           children: [
-                            Icon(Icons.edit, size: 20),
-                            SizedBox(width: 8),
-                            Text('Edit'),
+                            Icon(
+                              Icons.edit_outlined,
+                              size: 18,
+                              color: AppColors.textPrimary,
+                            ),
+                            SizedBox(width: 10),
+                            Text('EDIT GAME'),
                           ],
                         ),
                       ),
@@ -139,9 +147,16 @@ class _GameDetailScreenState extends State<GameDetailScreen> {
                         value: 'delete',
                         child: Row(
                           children: [
-                            Icon(Icons.delete, size: 20, color: Colors.red),
-                            SizedBox(width: 8),
-                            Text('Delete', style: TextStyle(color: Colors.red)),
+                            Icon(
+                              Icons.delete_outline,
+                              size: 18,
+                              color: AppColors.error,
+                            ),
+                            SizedBox(width: 10),
+                            Text(
+                              'DELETE GAME',
+                              style: TextStyle(color: AppColors.error),
+                            ),
                           ],
                         ),
                       ),
@@ -165,20 +180,25 @@ class _GameDetailScreenState extends State<GameDetailScreen> {
       GameFailure(:final errorMessage) => Center(
         child: Text(
           errorMessage,
-          style: const TextStyle(color: Colors.red),
+          style: AppTextStyles.body.copyWith(color: AppColors.error),
         ),
       ),
       GameSuccess(:final selectedGame) =>
         selectedGame == null
-            ? const Center(child: Text("Detail game tidak ditemukan."))
+            ? const Center(
+                child: Text(
+                  "DETAIL GAME TIDAK DITEMUKAN.",
+                  style: AppTextStyles.overline,
+                ),
+              )
             : SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     GameDetailBody(game: selectedGame),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 16),
                     GameLogListWidget(gameId: widget.gameId),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 32),
                   ],
                 ),
               ),

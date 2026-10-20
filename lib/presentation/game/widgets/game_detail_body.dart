@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:nic_backlog/data/models/game_model.dart';
+import 'package:nic_backlog/utils/app_theme.dart';
 
 class GameDetailBody extends StatelessWidget {
   final GameModel game;
@@ -23,11 +24,11 @@ class GameDetailBody extends StatelessWidget {
         width: double.infinity,
         errorBuilder: (context, error, stackTrace) {
           return Container(
-            color: Colors.grey[800],
+            color: AppColors.surface,
             child: const Icon(
-              Icons.broken_image,
+              Icons.broken_image_outlined,
               size: 50,
-              color: Colors.white54,
+              color: AppColors.textSecondary,
             ),
           );
         },
@@ -35,104 +36,119 @@ class GameDetailBody extends StatelessWidget {
     }
 
     return Container(
-      color: Colors.grey[800],
-      child: const Icon(Icons.gamepad, size: 50, color: Colors.white54),
+      color: AppColors.primary,
+      child: const Icon(Icons.gamepad, size: 50, color: AppColors.tertiary),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final releaseDateStr =
+        "${game.releaseDate.day.toString().padLeft(2, '0')}/"
+        "${game.releaseDate.month.toString().padLeft(2, '0')}/"
+        "${game.releaseDate.year}";
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AspectRatio(aspectRatio: 16 / 9, child: _buildGameCover(game.imageUrl)),
+        Container(
+          decoration: const BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: AppColors.borderStrong, width: 2),
+            ),
+          ),
+          child: AspectRatio(
+            aspectRatio: 16 / 9,
+            child: _buildGameCover(game.imageUrl),
+          ),
+        ),
 
         Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Expanded(
                     child: Text(
-                      game.title,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
+                      "${game.genre.toUpperCase()}  •  RELEASED $releaseDateStr",
+                      style: AppTextStyles.overline.copyWith(
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ),
-
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.redAccent.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      game.status.name.toUpperCase(),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.redAccent,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 8),
-
-              Wrap(
-                spacing: 8,
-                children: [
-                  Chip(
-                    avatar: const Icon(Icons.category, size: 16),
-                    label: Text(game.genre),
-                  ),
-                  Chip(
-                    avatar: const Icon(Icons.calendar_today, size: 16),
-                    label: Text(
-                      "${game.releaseDate.day}/${game.releaseDate.month}/${game.releaseDate.year}",
-                    ),
-                  ),
+                  const SizedBox(width: 12),
+                  AppTheme.buildStatusChip(game.status),
                 ],
               ),
 
               const SizedBox(height: 12),
 
-              Row(
-                children: [
-                  const Icon(Icons.star, color: Colors.amber, size: 24),
-                  const SizedBox(width: 4),
-                  Text(
-                    "${game.overallRating.toStringAsFixed(1)} / 5.0",
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+              Text(
+                game.title,
+                style: AppTextStyles.headline,
               ),
 
               const SizedBox(height: 16),
 
-              const Text(
-                "Deskripsi Game",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  border: Border.all(color: AppColors.borderStrong, width: 2),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.star,
+                      color: AppColors.tertiary,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      "RATING: ${game.overallRating.toStringAsFixed(1)} / 5.0",
+                      style: AppTextStyles.overline.copyWith(
+                        color: AppColors.tertiary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
 
-              const SizedBox(height: 6),
+              const SizedBox(height: 24),
 
-              Text(
-                game.description.isNotEmpty
-                    ? game.description
-                    : "Tidak ada deskripsi.",
-                style: const TextStyle(height: 1.4),
+              const Text(
+                "SYNOPSIS & EDITORIAL NOTES",
+                style: AppTextStyles.overline,
+              ),
+
+              const SizedBox(height: 8),
+
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: AppColors.surface,
+                  border: Border(
+                    left: BorderSide(color: AppColors.secondary, width: 4),
+                    top: BorderSide(color: AppColors.borderSubtle, width: 1),
+                    right: BorderSide(color: AppColors.borderSubtle, width: 1),
+                    bottom: BorderSide(color: AppColors.borderSubtle, width: 1),
+                  ),
+                ),
+                child: Text(
+                  game.description.isNotEmpty
+                      ? game.description
+                      : "Tidak ada deskripsi.",
+                  style: AppTextStyles.body,
+                ),
               ),
             ],
           ),

@@ -6,6 +6,7 @@ import 'package:nic_backlog/logic/game_log/game_log_bloc.dart';
 import 'package:nic_backlog/logic/game_log/game_log_event.dart';
 import 'package:nic_backlog/logic/game_log/game_log_state.dart';
 import 'package:nic_backlog/presentation/game/create_update_game_log_screen.dart';
+import 'package:nic_backlog/utils/app_theme.dart';
 
 class GameLogListWidget extends StatelessWidget {
   final String gameId;
@@ -34,21 +35,24 @@ class GameLogListWidget extends StatelessWidget {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text("Hapus Log"),
+          title: const Text("HAPUS LOG"),
           content: Text('Apakah Anda yakin ingin menghapus log "$title"?'),
           actions: [
-            TextButton(
+            OutlinedButton(
               onPressed: () {
                 Navigator.pop(dialogContext, false);
               },
-              child: const Text("Batal"),
+              child: const Text("BATAL"),
             ),
-            TextButton(
-              style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error,
+                side: const BorderSide(color: AppColors.error, width: 2),
+              ),
               onPressed: () {
                 Navigator.pop(dialogContext, true);
               },
-              child: const Text("Hapus"),
+              child: const Text("HAPUS"),
             ),
           ],
         );
@@ -61,25 +65,47 @@ class GameLogListWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const Divider(color: AppColors.borderStrong, thickness: 2),
+          const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Text(
-                "Game Logs & Jurnal",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "SESSION ENTRIES",
+                    style: AppTextStyles.overline.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  const Text(
+                    "GAME LOGS & JURNAL",
+                    style: AppTextStyles.subhead,
+                  ),
+                ],
               ),
-              IconButton(
-                icon: const Icon(Icons.add_circle, color: Colors.redAccent),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                ),
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text("NEW LOG"),
                 onPressed: () => _navigateToForm(context),
               ),
             ],
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
 
           BlocBuilder<GameLogBloc, GameLogState>(
             builder: (context, state) {
@@ -93,21 +119,29 @@ class GameLogListWidget extends StatelessWidget {
                   child: Center(
                     child: Text(
                       errorMessage,
-                      style: const TextStyle(color: Colors.red),
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.error,
+                      ),
                     ),
                   ),
                 ),
                 GameLogSuccess(:final logs) =>
                   logs.isEmpty
-                      ? const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          child: Center(
-                            child: Text(
-                              "Belum ada log permainan.\n"
-                              "Klik tombol + untuk menambah jurnal baru!",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(color: Colors.grey),
+                      ? Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            border: Border.all(
+                              color: AppColors.borderSubtle,
+                              width: 2,
                             ),
+                          ),
+                          child: Text(
+                            "Belum ada log permainan.\n"
+                            "Klik tombol '+ NEW LOG' untuk menambah jurnal baru!",
+                            textAlign: TextAlign.center,
+                            style: AppTextStyles.bodySmall,
                           ),
                         )
                       : ListView.builder(
@@ -122,120 +156,166 @@ class GameLogListWidget extends StatelessWidget {
                                 "${log.date.month.toString().padLeft(2, '0')}/"
                                 "${log.date.year}";
 
-                            return Dismissible(
-                              key: Key(log.id),
-                              direction: DismissDirection.endToStart,
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Dismissible(
+                                key: Key(log.id),
+                                direction: DismissDirection.endToStart,
 
-                              background: Container(
-                                margin: const EdgeInsets.only(bottom: 8),
-                                decoration: BoxDecoration(
-                                  color: Colors.redAccent,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                alignment: Alignment.centerRight,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                ),
-                                child: const Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    Icon(
-                                      Icons.delete_outline,
-                                      color: Colors.white,
-                                    ),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      "Hapus",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-
-                              confirmDismiss: (_) {
-                                return _confirmDelete(context, log.title);
-                              },
-
-                              onDismissed: (_) {
-                                context.read<GameLogBloc>().add(
-                                  DeleteGameLogRequested(
-                                    gameId: gameId,
-                                    logId: log.id,
-                                  ),
-                                );
-                              },
-
-                              child: Card(
-                                margin: const EdgeInsets.only(bottom: 8),
-                                child: ListTile(
-                                  onTap: () {
-                                    _navigateToForm(context, gameLog: log);
-                                  },
-
-                                  title: Text(
-                                    log.title,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
+                                background: Container(
+                                  decoration: BoxDecoration(
+                                    color: AppColors.error,
+                                    border: Border.all(
+                                      color: AppColors.error,
+                                      width: 2,
                                     ),
                                   ),
-
-                                  subtitle: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                  alignment: Alignment.centerRight,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
-                                      Text(
-                                        "Tanggal: $dateStr",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey[500],
-                                        ),
+                                      const Icon(
+                                        Icons.delete_outline,
+                                        color: AppColors.tertiary,
                                       ),
-                                      const SizedBox(height: 4),
+                                      const SizedBox(width: 8),
                                       Text(
-                                        log.note,
-                                        maxLines: 4,
-                                        overflow: TextOverflow.ellipsis,
+                                        "HAPUS",
+                                        style: AppTextStyles.button,
                                       ),
                                     ],
                                   ),
+                                ),
 
-                                  trailing: log.rating != null
-                                      ? Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                            vertical: 4,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: Colors.amber.withValues(
-                                              alpha: 0.2,
-                                            ),
-                                            borderRadius: BorderRadius.circular(
-                                              6,
-                                            ),
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              const Icon(
-                                                Icons.star,
-                                                size: 14,
-                                                color: Colors.amber,
+                                confirmDismiss: (_) {
+                                  return _confirmDelete(context, log.title);
+                                },
+
+                                onDismissed: (_) {
+                                  context.read<GameLogBloc>().add(
+                                    DeleteGameLogRequested(
+                                      gameId: gameId,
+                                      logId: log.id,
+                                    ),
+                                  );
+                                },
+
+                                child: InkWell(
+                                  onTap: () {
+                                    _navigateToForm(context, gameLog: log);
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.background,
+                                      border: Border(
+                                        left: BorderSide(
+                                          color: AppColors.borderStrong,
+                                          width: 4,
+                                        ),
+                                        top: BorderSide(
+                                          color: AppColors.borderSubtle,
+                                          width: 2,
+                                        ),
+                                        right: BorderSide(
+                                          color: AppColors.borderSubtle,
+                                          width: 2,
+                                        ),
+                                        bottom: BorderSide(
+                                          color: AppColors.borderSubtle,
+                                          width: 2,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    "DATE // $dateStr",
+                                                    style: AppTextStyles
+                                                        .overline
+                                                        .copyWith(
+                                                          color: AppColors
+                                                              .textTertiary,
+                                                        ),
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    log.title,
+                                                    style: AppTextStyles.body
+                                                        .copyWith(
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                        ),
+                                                  ),
+                                                ],
                                               ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                log.rating!.toStringAsFixed(1),
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.amber,
+                                            ),
+                                            if (log.rating != null)
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 4,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.primary,
+                                                  border: Border.all(
+                                                    color:
+                                                        AppColors.borderStrong,
+                                                    width: 2,
+                                                  ),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    const Icon(
+                                                      Icons.star,
+                                                      size: 12,
+                                                      color: AppColors.tertiary,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      log.rating!
+                                                          .toStringAsFixed(1),
+                                                      style: AppTextStyles
+                                                          .overline
+                                                          .copyWith(
+                                                            color: AppColors
+                                                                .tertiary,
+                                                          ),
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
-                                            ],
-                                          ),
-                                        )
-                                      : null,
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          log.note,
+                                          maxLines: 4,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: AppTextStyles.bodySmall,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ),
                             );

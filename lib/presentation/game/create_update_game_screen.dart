@@ -9,6 +9,7 @@ import 'package:nic_backlog/data/models/game_model.dart';
 import 'package:nic_backlog/logic/game/game_bloc.dart';
 import 'package:nic_backlog/logic/game/game_event.dart';
 import 'package:nic_backlog/logic/game/game_state.dart';
+import 'package:nic_backlog/utils/app_theme.dart';
 
 class CreateUpdateGameScreen extends StatefulWidget {
   final GameModel? game;
@@ -75,8 +76,6 @@ class _CreateUpdateGameScreenState extends State<CreateUpdateGameScreen> {
 
     if (pickedFile == null || !mounted) return;
 
-    final primaryColor = Theme.of(context).primaryColor;
-
     final croppedFile = await ImageCropper().cropImage(
       sourcePath: pickedFile.path,
       compressQuality: 60,
@@ -86,8 +85,8 @@ class _CreateUpdateGameScreenState extends State<CreateUpdateGameScreen> {
       uiSettings: [
         AndroidUiSettings(
           toolbarTitle: 'Crop Cover Image (16:9)',
-          toolbarColor: primaryColor,
-          toolbarWidgetColor: Colors.white,
+          toolbarColor: AppColors.primary,
+          toolbarWidgetColor: AppColors.tertiary,
           initAspectRatio: CropAspectRatioPreset.ratio16x9,
           lockAspectRatio: true,
         ),
@@ -131,8 +130,8 @@ class _CreateUpdateGameScreenState extends State<CreateUpdateGameScreen> {
       if (!hasImage) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Upload foto cover game terlebih dahulu!"),
-            backgroundColor: Colors.orange,
+            content: Text("UPLOAD FOTO COVER GAME TERLEBIH DAHULU!"),
+            backgroundColor: AppColors.warning,
           ),
         );
         return;
@@ -141,8 +140,8 @@ class _CreateUpdateGameScreenState extends State<CreateUpdateGameScreen> {
       if (_selectedReleaseDate == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Pilih tanggal rilis game terlebih dahulu!"),
-            backgroundColor: Colors.orange,
+            content: Text("PILIH TANGGAL RILIS GAME TERLEBIH DAHULU!"),
+            backgroundColor: AppColors.warning,
           ),
         );
         return;
@@ -180,7 +179,9 @@ class _CreateUpdateGameScreenState extends State<CreateUpdateGameScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(_isEditMode ? "Edit Game" : "Add New Game")),
+      appBar: AppBar(
+        title: Text(_isEditMode ? "EDIT GAME" : "ADD NEW GAME"),
+      ),
       body: BlocConsumer<GameBloc, GameState>(
         listener: (context, state) {
           switch (state) {
@@ -192,10 +193,10 @@ class _CreateUpdateGameScreenState extends State<CreateUpdateGameScreen> {
                 SnackBar(
                   content: Text(
                     _isEditMode
-                        ? "Game berhasil diperbarui!"
-                        : "Game berhasil ditambahkan!",
+                        ? "GAME BERHASIL DIPERBARUI!"
+                        : "GAME BERHASIL DITAMBAHKAN!",
                   ),
-                  backgroundColor: Colors.green,
+                  backgroundColor: AppColors.success,
                 ),
               );
               Navigator.pop(context);
@@ -203,7 +204,7 @@ class _CreateUpdateGameScreenState extends State<CreateUpdateGameScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(errorMessage),
-                  backgroundColor: Colors.red,
+                  backgroundColor: AppColors.error,
                 ),
               );
           }
@@ -217,10 +218,15 @@ class _CreateUpdateGameScreenState extends State<CreateUpdateGameScreen> {
           return Form(
             key: _formKey,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const Text(
+                    "COVER ARTWORK // 16:9",
+                    style: AppTextStyles.overline,
+                  ),
+                  const SizedBox(height: 8),
                   GestureDetector(
                     onTap: _pickAndCropImage,
                     child: AspectRatio(
@@ -231,9 +237,11 @@ class _CreateUpdateGameScreenState extends State<CreateUpdateGameScreen> {
 
                           return Container(
                             decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.grey[400]!),
+                              color: AppColors.surface,
+                              border: Border.all(
+                                color: AppColors.borderStrong,
+                                width: 2,
+                              ),
                               image: imageProvider != null
                                   ? DecorationImage(
                                       image: imageProvider,
@@ -244,18 +252,17 @@ class _CreateUpdateGameScreenState extends State<CreateUpdateGameScreen> {
                             child: imageProvider == null
                                 ? Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
-                                    children: const [
-                                      Icon(
-                                        Icons.add_a_photo,
-                                        size: 40,
-                                        color: Colors.grey,
+                                    children: [
+                                      const Icon(
+                                        Icons.add_a_photo_outlined,
+                                        size: 36,
+                                        color: AppColors.textPrimary,
                                       ),
-                                      SizedBox(height: 8),
+                                      const SizedBox(height: 8),
                                       Text(
-                                        "Tap to Upload Cover (16:9)",
-                                        style: TextStyle(
-                                          color: Colors.grey,
-                                          fontWeight: FontWeight.bold,
+                                        "TAP TO UPLOAD COVER (16:9)",
+                                        style: AppTextStyles.overline.copyWith(
+                                          color: AppColors.textSecondary,
                                         ),
                                       ),
                                     ],
@@ -266,13 +273,12 @@ class _CreateUpdateGameScreenState extends State<CreateUpdateGameScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
                   TextFormField(
                     controller: _titleController,
                     decoration: const InputDecoration(
-                      labelText: "Game Title *",
+                      labelText: "GAME TITLE *",
                       hintText: "e.g. Zelda: Breath of the Wild",
-                      border: OutlineInputBorder(),
                     ),
                     validator: (val) => val == null || val.trim().isEmpty
                         ? "Title is required"
@@ -282,9 +288,8 @@ class _CreateUpdateGameScreenState extends State<CreateUpdateGameScreen> {
                   TextFormField(
                     controller: _genreController,
                     decoration: const InputDecoration(
-                      labelText: "Genre *",
+                      labelText: "GENRE *",
                       hintText: "e.g. Action RPG, Open World",
-                      border: OutlineInputBorder(),
                     ),
                     validator: (val) => val == null || val.trim().isEmpty
                         ? "Genre is required"
@@ -294,13 +299,18 @@ class _CreateUpdateGameScreenState extends State<CreateUpdateGameScreen> {
                   DropdownButtonFormField<GameStatus>(
                     initialValue: _selectedStatus,
                     decoration: const InputDecoration(
-                      labelText: "Game Status",
-                      border: OutlineInputBorder(),
+                      labelText: "GAME STATUS",
                     ),
                     items: GameStatus.values.map((status) {
                       return DropdownMenuItem(
                         value: status,
-                        child: Text(status.name.toUpperCase()),
+                        child: Text(
+                          status.name.toUpperCase(),
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       );
                     }).toList(),
                     onChanged: (val) {
@@ -316,9 +326,8 @@ class _CreateUpdateGameScreenState extends State<CreateUpdateGameScreen> {
                     onTap: () => _pickReleaseDate(context),
                     child: InputDecorator(
                       decoration: const InputDecoration(
-                        labelText: "Release Date *",
-                        border: OutlineInputBorder(),
-                        suffixIcon: Icon(Icons.calendar_today),
+                        labelText: "RELEASE DATE *",
+                        suffixIcon: Icon(Icons.calendar_today, size: 18),
                       ),
                       child: Text(
                         _selectedReleaseDate == null
@@ -326,17 +335,21 @@ class _CreateUpdateGameScreenState extends State<CreateUpdateGameScreen> {
                             : DateFormat(
                                 'dd MMMM yyyy',
                               ).format(_selectedReleaseDate!),
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: _selectedReleaseDate == null
+                              ? AppColors.textTertiary
+                              : AppColors.textPrimary,
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _descriptionController,
-                    maxLines: 3,
+                    maxLines: 4,
                     decoration: const InputDecoration(
-                      labelText: "Description / Notes",
+                      labelText: "DESCRIPTION / NOTES",
                       hintText: "Short synopsis or personal notes...",
-                      border: OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -346,13 +359,15 @@ class _CreateUpdateGameScreenState extends State<CreateUpdateGameScreen> {
                     child: ElevatedButton(
                       onPressed: isLoading ? null : _submitForm,
                       child: isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : Text(
-                              _isEditMode ? "UPDATE GAME" : "SAVE GAME",
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: AppColors.tertiary,
+                                strokeWidth: 2,
                               ),
-                            ),
+                            )
+                          : Text(_isEditMode ? "UPDATE GAME" : "SAVE GAME"),
                     ),
                   ),
                 ],

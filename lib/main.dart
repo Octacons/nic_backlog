@@ -7,6 +7,7 @@ import 'package:nic_backlog/data/repositories/game_repository.dart';
 import 'package:nic_backlog/logic/auth/auth_bloc.dart';
 import 'package:nic_backlog/logic/game/game_bloc.dart';
 import 'package:nic_backlog/presentation/auth/login_screen.dart';
+import 'package:nic_backlog/utils/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,11 +25,9 @@ class MyApp extends StatelessWidget {
         RepositoryProvider<AuthRepository>(
           create: (context) => AuthRepository(),
         ),
-
         RepositoryProvider<GameRepository>(
           create: (context) => GameRepository(),
         ),
-
         RepositoryProvider<GameLogRepository>(
           create: (context) => GameLogRepository(),
         ),
@@ -47,11 +46,7 @@ class MyApp extends StatelessWidget {
         child: MaterialApp(
           debugShowCheckedModeBanner: false,
           title: 'Nic BackLog',
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color.fromARGB(255, 178, 0, 0),
-            ),
-          ),
+          theme: AppTheme.voiceBoxTheme,
           home: const LoginScreen(),
         ),
       ),

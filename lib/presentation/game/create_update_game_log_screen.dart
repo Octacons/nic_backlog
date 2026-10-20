@@ -4,6 +4,7 @@ import 'package:nic_backlog/data/models/game_log_model.dart';
 import 'package:nic_backlog/logic/game_log/game_log_bloc.dart';
 import 'package:nic_backlog/logic/game_log/game_log_event.dart';
 import 'package:nic_backlog/logic/game_log/game_log_state.dart';
+import 'package:nic_backlog/utils/app_theme.dart';
 
 class CreateUpdateGameLogScreen extends StatefulWidget {
   final String gameId;
@@ -100,17 +101,20 @@ class _CreateUpdateGameLogScreenState extends State<CreateUpdateGameLogScreen> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text("Hapus Log"),
+          title: const Text("HAPUS LOG"),
           content: Text('Apakah Anda yakin ingin menghapus log "${log.title}"?'),
           actions: [
-            TextButton(
+            OutlinedButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text("Batal"),
+              child: const Text("BATAL"),
             ),
-            TextButton(
-              style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error,
+                side: const BorderSide(color: AppColors.error, width: 2),
+              ),
               onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text("Hapus"),
+              child: const Text("HAPUS"),
             ),
           ],
         );
@@ -131,11 +135,11 @@ class _CreateUpdateGameLogScreenState extends State<CreateUpdateGameLogScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? "Edit Jurnal" : "Tambah Jurnal"),
+        title: Text(isEditing ? "EDIT JURNAL" : "TAMBAH JURNAL"),
         actions: [
           if (isEditing)
             IconButton(
-              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+              icon: const Icon(Icons.delete_outline, color: AppColors.secondary),
               tooltip: "Hapus Log",
               onPressed: _confirmDelete,
             ),
@@ -151,7 +155,7 @@ class _CreateUpdateGameLogScreenState extends State<CreateUpdateGameLogScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(errorMessage),
-                  backgroundColor: Colors.red,
+                  backgroundColor: AppColors.error,
                 ),
               );
             case GameLogSuccess():
@@ -159,29 +163,33 @@ class _CreateUpdateGameLogScreenState extends State<CreateUpdateGameLogScreen> {
                 SnackBar(
                   content: Text(
                     isEditing
-                        ? "Jurnal berhasil diperbarui"
-                        : "Jurnal berhasil ditambahkan",
+                        ? "JURNAL BERHASIL DIPERBARUI"
+                        : "JURNAL BERHASIL DITAMBAHKAN",
                   ),
-                  backgroundColor: Colors.green,
+                  backgroundColor: AppColors.success,
                 ),
               );
               Navigator.pop(context);
           }
         },
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(24.0),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                const Text(
+                  "SESSION LOG ENTRY",
+                  style: AppTextStyles.overline,
+                ),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: _titleController,
                   decoration: const InputDecoration(
-                    labelText: "Judul Log / Aktivitas",
+                    labelText: "JUDUL LOG / AKTIVITAS",
                     hintText: "Misal: Selesai Chapter 1 / Tamat",
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.title),
+                    prefixIcon: Icon(Icons.title, size: 18),
                   ),
                   validator: (value) => value == null || value.trim().isEmpty
                       ? "Judul wajib diisi"
@@ -192,11 +200,10 @@ class _CreateUpdateGameLogScreenState extends State<CreateUpdateGameLogScreen> {
                   controller: _noteController,
                   maxLines: 4,
                   decoration: const InputDecoration(
-                    labelText: "Catatan Gameplay",
+                    labelText: "CATATAN GAMEPLAY",
                     hintText:
                         "Tulis progres, impresi cerita, atau build karakter...",
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.notes),
+                    prefixIcon: Icon(Icons.notes, size: 18),
                   ),
                   validator: (value) => value == null || value.trim().isEmpty
                       ? "Catatan wajib diisi"
@@ -209,10 +216,9 @@ class _CreateUpdateGameLogScreenState extends State<CreateUpdateGameLogScreen> {
                     decimal: true,
                   ),
                   decoration: const InputDecoration(
-                    labelText: "Rating Sesi (Opsional 1.0 - 5.0)",
+                    labelText: "RATING SESI (OPSIONAL 1.0 - 5.0)",
                     hintText: "4.5",
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.star_outline),
+                    prefixIcon: Icon(Icons.star_outline, size: 18),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) return null;
@@ -226,15 +232,18 @@ class _CreateUpdateGameLogScreenState extends State<CreateUpdateGameLogScreen> {
                 const SizedBox(height: 16),
                 InkWell(
                   onTap: _pickDate,
-                  borderRadius: BorderRadius.circular(4),
                   child: InputDecorator(
                     decoration: const InputDecoration(
-                      labelText: "Tanggal Bermain",
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.calendar_today),
+                      labelText: "TANGGAL BERMAIN",
+                      prefixIcon: Icon(Icons.calendar_today, size: 18),
                       suffixIcon: Icon(Icons.arrow_drop_down),
                     ),
-                    child: Text(formattedDate),
+                    child: Text(
+                      formattedDate,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -247,18 +256,21 @@ class _CreateUpdateGameLogScreenState extends State<CreateUpdateGameLogScreen> {
                       GameLogFailure() => false,
                     };
 
-                    return ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                    return SizedBox(
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: isLoading ? null : _submit,
+                        child: isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: AppColors.tertiary,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(isEditing ? "PERBARUI LOG" : "SIMPAN LOG"),
                       ),
-                      onPressed: isLoading ? null : _submit,
-                      child: isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Text(isEditing ? "Perbarui Log" : "Simpan Log"),
                     );
                   },
                 ),
