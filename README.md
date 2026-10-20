@@ -127,3 +127,8 @@ lib/
    ```bash
    flutter run
    ```
+5. atau misalnya mau yang namanya appnya bisa aja langsung jalankan ini di cli
+
+```bash
+  flutter build apk --no-tree-shake-icons --release
+```
